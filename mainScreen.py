@@ -1,5 +1,6 @@
 # Multi-frame tkinter application v2.3
 import tkinter as tk
+from tkinter import PhotoImage
 
 class SampleApp(tk.Tk):
     def __init__(self):
@@ -24,13 +25,23 @@ class StartPage(tk.Frame):
         header_label = tk.Label(self, text="Hi, I'm RUBEN!", bg="#990000", fg="white", font=("Arial", 24, "bold"), pady=20)
         header_label.pack(side="top", fill="x")
 
-        button_frame = tk.Frame(self, bg="white")
+        button_frame = tk.Frame(self)
         button_frame.pack(side="top", pady=20)
-
-        button1 = tk.Button(button_frame, text="Where to?", command=lambda: master.switch_frame(PageOne), bg="#990000", fg="white", font=("Arial", 18), bd=3)
-        button2 = tk.Button(button_frame, text="Rutgers Database", command=lambda: button_click(2), bg="#990000", fg="white", font=("Arial", 18), bd=3)
-        button3 = tk.Button(button_frame, text="FAQ", command=lambda: button_click(3), bg="#990000", fg="white", font=("Arial", 18), bd=3)
-
+        
+        self.icon1 = tk.PhotoImage(file="icons/map_marker_white.png")
+        self.icon2 = tk.PhotoImage(file="icons/database_icon_white.png")
+        self.icon3 = tk.PhotoImage(file="icons/Question_mark_white.png")
+        
+        # Resize the icons to fit the button
+        self.icon1 = self.icon1.subsample(50)
+        self.icon2 = self.icon2.subsample(50)
+        self.icon3 = self.icon3.subsample(50)
+        
+        # Assigning images to buttons
+        button1 = tk.Button(button_frame, text="Where to?", command=lambda: master.switch_frame(PageOne), bg="#990000", fg="white", font=("Arial", 18), bd=3, image=self.icon1, compound='left')
+        button2 = tk.Button(button_frame, text="Rutgers Database", command=lambda: button_click(2), bg="#990000", fg="white", font=("Arial", 18), bd=3, image=self.icon2, compound='left')
+        button3 = tk.Button(button_frame, text="FAQ", command=lambda: button_click(3), bg="#990000", fg="white", font=("Arial", 18), bd=3, image=self.icon3, compound='left')
+        
         button1.pack(side=tk.LEFT, padx=20)
         button2.pack(side=tk.LEFT, padx=20)
         button3.pack(side=tk.LEFT, padx=20)
