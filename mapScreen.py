@@ -1,21 +1,79 @@
 import tkinter
 from tkinter import ttk
 from tkintermapview import TkinterMapView
+import csv
+import os
 
 listOfLocations = {
     "BSC" : (40.52346671364952, -74.45821773128102),
-    "LSC" : (40.52361937958186, -74.43697999874263)
+    "LSC" : (40.52361937958186, -74.43697999874263),
+    "ARC" : (40.523776007542665, -74.4648874666412)
 }
-def on_select(marker, event):
+def generatePath(markerA, markerB):
+    if(markerA.data == "NULL" or markerB.data == "NULL"):
+        map_widget.delete_all_path()
+        if(markerA.data == "NULL" and markerB.data == "NULL"):
+            map_widget.set_position(40.52346671364952, -74.45821773128102)
+        elif(not markerA.data == "NULL"):
+            map_widget.set_position(listOfLocations[markerA.data][0], listOfLocations[markerA.data][1])
+        else:
+            map_widget.set_position(listOfLocations[markerB.data][0], listOfLocations[markerB.data][1])
+    else:
+        csv_file_path = f"mapPaths/{markerA.data}to{markerB.data}.csv"
+        if(not os.path.isfile(csv_file_path)):
+            csv_file_path = f"mapPaths/{markerB.data}to{markerA.data}.csv"
+            if(not os.path.isfile(csv_file_path)):
+                map_widget.set_position(listOfLocations[markerA.data][0], listOfLocations[markerA.data][1])
+                return
+        with open(csv_file_path, 'r') as file:
+            csv_reader = csv.reader(file)
+            
+            # Initialize a list to store the coordinates
+            coordinates = []
+            
+            # Iterate through each row in the CSV file
+            for row in csv_reader:
+                # Check if both latitude and longitude are present and convert to float
+                if len(row) >= 2 and row[0].strip() and row[1].strip():
+                    try:
+                        latitude, longitude = map(float, (row[0].strip(), row[1].strip()))
+                        # Append the coordinates tuple to the list
+                        coordinates.append((latitude, longitude))
+                    except ValueError as e:
+                        print(f"Skipping invalid row: {row}. Error: {e}")
+        
+        map_widget.delete_all_path()
+        map_widget.set_path(coordinates)
+        if coordinates:
+            mid_latitude = sum(coord[0] for coord in coordinates) / len(coordinates)
+            mid_longitude = sum(coord[1] for coord in coordinates) / len(coordinates)
+
+            # Set the map position to the middle of the path
+            map_widget.set_position(mid_latitude, mid_longitude)
+def on_select(marker, event, other_dropdown, other_marker):
     # Example function to handle drop-down selection
     selected_location = event.widget.get()
-
+    
+    if(selected_location == ""):
+        marker.set_position(0, 0)
+        marker.data = "NULL"
     # Update marker coordinates based on the selected location
-    marker.set_position(listOfLocations[selected_location][0], listOfLocations[selected_location][1])
+    else:
+        marker.set_position(listOfLocations[selected_location][0], listOfLocations[selected_location][1])
+        marker.set_text(selected_location)
+        marker.data = selected_location
 
+    other_dropdown_value = other_dropdown.get()
+    if other_dropdown_value == selected_location:
+        other_dropdown.set("")  # Set the other dropdown to blank
+        other_marker.set_position(0, 0)
+        other_marker.data = "NULL"
+        
     # Update the map
+    generatePath(marker, other_marker)
     map_widget.update()
 
+        
 class CustomTkinterMapView(TkinterMapView):
     def mouse_move(self, event):
         # Override the mouse_move() method to do nothing
@@ -49,201 +107,51 @@ map_widget = CustomTkinterMapView(right_frame, width=600, height=400, corner_rad
 map_widget.pack(fill="both", expand=True)
 
 # Add markers and path to the map
-ARC = 40.524681764315744, -74.46524124349487, "ARC"
 marker_2 = map_widget.set_marker(40.52346671364952, -74.45821773128102, text="BSC")
-marker_3 = map_widget.set_marker(40.52361937958186, -74.43697999874263, text="LSC")
+marker_2.data = "BSC"
+marker_3 = map_widget.set_marker(0, 0, text="NULL")
+marker_3.data = "NULL"
 
-path_1 = map_widget.set_path([(40.52343, -74.45796),
-(40.52341, -74.45795),
-(40.52336, -74.45793),
-(40.52333, -74.45790),
-(40.52331, -74.45786),
-(40.52330, -74.45781),
-(40.52329, -74.45768),
-(40.52352, -74.45781),
-(40.52353, -74.45782),
-(40.52362, -74.45787),
-(40.52368, -74.45792),
-(40.52372, -74.45795),
-(40.52377, -74.45798),
-(40.52384, -74.45804),
-(40.52390, -74.45809),
-(40.52397, -74.45815),
-(40.52405, -74.45823),
-(40.52413, -74.45832),
-(40.52420, -74.45841),
-(40.52430, -74.45855),
-(40.52435, -74.45861),
-(40.52443, -74.45870),
-(40.52510, -74.45775),
-(40.52525, -74.45751),
-(40.52529, -74.45743),
-(40.52532, -74.45736),
-(40.52534, -74.45733),
-(40.52535, -74.45730),
-(40.52536, -74.45728),
-(40.52542, -74.45722),
-(40.52521, -74.45654),
-(40.52504, -74.45596),
-(40.52502, -74.45585),
-(40.52501, -74.45581),
-(40.52501, -74.45576),
-(40.52501, -74.45573),
-(40.52501, -74.45563),
-(40.52501, -74.45556),
-(40.52501, -74.45548),
-(40.52502, -74.45542),
-(40.52512, -74.45477),
-(40.52515, -74.45460),
-(40.52522, -74.45419),
-(40.52528, -74.45382),
-(40.52531, -74.45364),
-(40.52537, -74.45328),
-(40.52548, -74.45259),
-(40.52551, -74.45235),
-(40.52558, -74.45195),
-(40.52559, -74.45189),
-(40.52566, -74.45140),
-(40.52565, -74.45125),
-(40.52566, -74.45114),
-(40.52566, -74.45106),
-(40.52565, -74.45095),
-(40.52565, -74.45084),
-(40.52564, -74.45075),
-(40.52563, -74.45070),
-(40.52561, -74.45063),
-(40.52558, -74.45051),
-(40.52557, -74.45047),
-(40.52553, -74.45034),
-(40.52550, -74.45025),
-(40.52534, -74.44971),
-(40.52525, -74.44940),
-(40.52513, -74.44906),
-(40.52493, -74.44842),
-(40.52477, -74.44787),
-(40.52446, -74.44684),
-(40.52412, -74.44578),
-(40.52404, -74.44550),
-(40.52397, -74.44524),
-(40.52384, -74.44470),
-(40.52372, -74.44414),
-(40.52364, -74.44373),
-(40.52358, -74.44347),
-(40.52343, -74.44275),
-(40.52341, -74.44271),
-(40.52337, -74.44253),
-(40.52329, -74.44229),
-(40.52328, -74.44227),
-(40.52323, -74.44210),
-(40.52320, -74.44201),
-(40.52317, -74.44194),
-(40.52313, -74.44185),
-(40.52309, -74.44177),
-(40.52300, -74.44159),
-(40.52292, -74.44146),
-(40.52286, -74.44139),
-(40.52277, -74.44133),
-(40.52274, -74.44134),
-(40.52273, -74.44134),
-(40.52271, -74.44134),
-(40.52270, -74.44134),
-(40.52268, -74.44133),
-(40.52267, -74.44133),
-(40.52265, -74.44132),
-(40.52264, -74.44131),
-(40.52262, -74.44130),
-(40.52261, -74.44129),
-(40.52260, -74.44128),
-(40.52259, -74.44126),
-(40.52258, -74.44125),
-(40.52257, -74.44123),
-(40.52256, -74.44122),
-(40.52255, -74.44120),
-(40.52255, -74.44118),
-(40.52254, -74.44116),
-(40.52254, -74.44114),
-(40.52254, -74.44112),
-(40.52253, -74.44110),
-(40.52254, -74.44108),
-(40.52254, -74.44106),
-(40.52254, -74.44104),
-(40.52254, -74.44101),
-(40.52255, -74.44099),
-(40.52256, -74.44097),
-(40.52257, -74.44095),
-(40.52258, -74.44094),
-(40.52259, -74.44092),
-(40.52260, -74.44091),
-(40.52261, -74.44090),
-(40.52262, -74.44088),
-(40.52264, -74.44087),
-(40.52265, -74.44087),
-(40.52267, -74.44086),
-(40.52269, -74.44085),
-(40.52271, -74.44085),
-(40.52272, -74.44085),
-(40.52274, -74.44085),
-(40.52275, -74.44085),
-(40.52277, -74.44086),
-(40.52278, -74.44086),
-(40.52280, -74.44087),
-(40.52281, -74.44088),
-(40.52283, -74.44089),
-(40.52284, -74.44090),
-(40.52285, -74.44092),
-(40.52288, -74.44087),
-(40.52294, -74.44080),
-(40.52309, -74.44063),
-(40.52311, -74.44061),
-(40.52348, -74.44025),
-(40.52392, -74.43983),
-(40.52436, -74.43940),
-(40.52461, -74.43915),
-(40.52477, -74.43899),
-(40.52511, -74.43865),
-(40.52533, -74.43843),
-(40.52554, -74.43822),
-(40.52538, -74.43795),
-(40.52525, -74.43773),
-(40.52499, -74.43730),
-(40.52488, -74.43708),
-(40.52475, -74.43684),
-(40.52470, -74.43676),
-(40.52449, -74.43641),
-(40.52439, -74.43623),
-(40.52414, -74.43579),
-(40.52398, -74.43551),
-(40.52397, -74.43548),
-(40.52386, -74.43555),
-(40.52368, -74.43574),
-(40.52364, -74.43578),
-(40.52360, -74.43602),
-(40.52357, -74.43622),
-(40.52353, -74.43641),
-(40.52350, -74.43649),
-(40.52346, -74.43655),
-(40.52344, -74.43658),
-(40.52341, -74.43662),
-(40.52337, -74.43665),
-(40.52332, -74.43667)])
-# ...
+# Read the CSV file
+csv_file_path = "mapPaths/BSCtoLSC.csv"
 
+with open(csv_file_path, 'r') as file:
+    csv_reader = csv.reader(file)
+    
+    # Initialize a list to store the coordinates
+    coordinates = []
+    
+    # Iterate through each row in the CSV file
+    for row in csv_reader:
+        # Check if both latitude and longitude are present and convert to float
+        if len(row) >= 2 and row[0].strip() and row[1].strip():
+            try:
+                latitude, longitude = map(float, (row[0].strip(), row[1].strip()))
+                # Append the coordinates tuple to the list
+                coordinates.append((latitude, longitude))
+            except ValueError as e:
+                print(f"Skipping invalid row: {row}. Error: {e}")
+
+# Set the path for the map_widget
+path_1 = None
 
 # Create two drop-down menus
 label_1 = ttk.Label(left_frame, text="Dropdown 1")
 label_1.grid(row=0, column=0, padx=5, pady=5)
-dropdown_1 = ttk.Combobox(left_frame, values=["BSC", "LSC"])
+dropdown_1 = ttk.Combobox(left_frame, values=["", "BSC", "LSC", "ARC"])
 dropdown_1.grid(row=1, column=0, padx=5, pady=5)
-dropdown_1.bind("<<ComboboxSelected>>", lambda event: on_select(marker_2, event))
+dropdown_1.bind("<<ComboboxSelected>>", lambda event: on_select(marker_2, event, dropdown_2, marker_3))
+# Set the default option for the first dropdown as "BSC"
+dropdown_1.set("BSC")
 
 label_2 = ttk.Label(left_frame, text="Dropdown 2")
 label_2.grid(row=2, column=0, padx=5, pady=5)
-dropdown_2 = ttk.Combobox(left_frame, values=["BSC", "LSC"])
+dropdown_2 = ttk.Combobox(left_frame, values=["", "BSC", "LSC", "ARC"])
 dropdown_2.grid(row=3, column=0, padx=5, pady=5)
-dropdown_2.bind("<<ComboboxSelected>>", lambda event: on_select(marker_3, event))
+dropdown_2.bind("<<ComboboxSelected>>", lambda event: on_select(marker_3, event, dropdown_1, marker_2))
 
 # Set map position
-map_widget.set_position(40.5242620, -74.4465721)
+map_widget.set_position(40.52346671364952, -74.45821773128102)
 
 map_widget.set_zoom(15)
 map_widget.max_zoom = 15
