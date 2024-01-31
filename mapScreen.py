@@ -1,17 +1,42 @@
 import tkinter
+from tkinter import ttk
 from tkintermapview import TkinterMapView
 
-root_tk = tkinter.Tk()
-root_tk.geometry(f"{600}x{400}")
-root_tk.title("map_view_simple_example.py")
+def on_select(event):
+    # Example function to handle drop-down selection
+    print("Selected item:", event.widget.get())
 
-# create map widget
-map_widget = TkinterMapView(root_tk, width=600, height=400, corner_radius=0)
+root_tk = tkinter.Tk()
+root_tk.geometry(f"{800}x{400}")
+root_tk.title("Map Viewing Screen")
+
+# Create a frame for the left side
+left_frame = tkinter.Frame(root_tk)
+left_frame.pack(side="left", fill="y")
+
+# Create two drop-down menus
+label_1 = ttk.Label(left_frame, text="Dropdown 1")
+label_1.grid(row=0, column=0, padx=5, pady=5)
+dropdown_1 = ttk.Combobox(left_frame, values=["Option 1", "Option 2"])
+dropdown_1.grid(row=1, column=0, padx=5, pady=5)
+dropdown_1.bind("<<ComboboxSelected>>", on_select)
+
+label_2 = ttk.Label(left_frame, text="Dropdown 2")
+label_2.grid(row=2, column=0, padx=5, pady=5)
+dropdown_2 = ttk.Combobox(left_frame, values=["Option A", "Option B"])
+dropdown_2.grid(row=3, column=0, padx=5, pady=5)
+dropdown_2.bind("<<ComboboxSelected>>", on_select)
+
+# Create a frame for the map on the right side
+right_frame = tkinter.Frame(root_tk)
+right_frame.pack(side="right", fill="both", expand=True)
+
+# Create map widget
+map_widget = TkinterMapView(right_frame, width=600, height=400, corner_radius=0)
 map_widget.pack(fill="both", expand=True)
 
-# google normal tile server
-map_widget.fit_bounding_box((40.52346671364952, -74.45821773128102), (40.52361937958186, -74.43697999874263))
 
+# Add markers and path to the map
 marker_2 = map_widget.set_marker(40.52346671364952, -74.45821773128102, text="BSC")
 marker_3 = map_widget.set_marker(40.52361937958186, -74.43697999874263, text="LSC")
 path_1 = map_widget.set_path([(40.52343, -74.45796),
@@ -187,7 +212,7 @@ path_1 = map_widget.set_path([(40.52343, -74.45796),
 (40.52341, -74.43662),
 (40.52337, -74.43665),
 (40.52332, -74.43667)])
-
-map_widget.set_position(40.52346671364952, -74.45821773128102, marker=True)
-
+# Set map position
+map_widget.set_position(40.5242620, -74.4465721)
+map_widget.set_zoom(15)
 root_tk.mainloop()
