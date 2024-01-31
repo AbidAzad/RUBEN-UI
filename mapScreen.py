@@ -2,21 +2,34 @@ import tkinter
 from tkinter import ttk
 from tkintermapview import TkinterMapView
 
-def on_select(event):
+listOfLocations = {
+    "BSC" : (40.52346671364952, -74.45821773128102),
+    "LSC" : (40.52361937958186, -74.43697999874263)
+}
+def on_select(marker, event):
     # Example function to handle drop-down selection
-    print("Selected item:", event.widget.get())
+    selected_location = event.widget.get()
+
+    # Update marker coordinates based on the selected location
+    marker.set_position(listOfLocations[selected_location][0], listOfLocations[selected_location][1])
+
+    # Update the map
+    map_widget.update()
 
 class CustomTkinterMapView(TkinterMapView):
     def mouse_move(self, event):
         # Override the mouse_move() method to do nothing
         pass
+    
     def mouse_zoom(self, event):
         pass
     
     def button_zoom_in(self):
         pass
+    
     def button_zoom_out(self):
         pass
+
 root_tk = tkinter.Tk()
 root_tk.geometry(f"{800}x{400}")
 root_tk.title("Map Viewing Screen")
@@ -25,18 +38,7 @@ root_tk.title("Map Viewing Screen")
 left_frame = tkinter.Frame(root_tk)
 left_frame.pack(side="left", fill="y")
 
-# Create two drop-down menus
-label_1 = ttk.Label(left_frame, text="Dropdown 1")
-label_1.grid(row=0, column=0, padx=5, pady=5)
-dropdown_1 = ttk.Combobox(left_frame, values=["Option 1", "Option 2"])
-dropdown_1.grid(row=1, column=0, padx=5, pady=5)
-dropdown_1.bind("<<ComboboxSelected>>", on_select)
 
-label_2 = ttk.Label(left_frame, text="Dropdown 2")
-label_2.grid(row=2, column=0, padx=5, pady=5)
-dropdown_2 = ttk.Combobox(left_frame, values=["Option A", "Option B"])
-dropdown_2.grid(row=3, column=0, padx=5, pady=5)
-dropdown_2.bind("<<ComboboxSelected>>", on_select)
 
 # Create a frame for the map on the right side
 right_frame = tkinter.Frame(root_tk)
@@ -46,10 +48,11 @@ right_frame.pack(side="right", fill="both", expand=True)
 map_widget = CustomTkinterMapView(right_frame, width=600, height=400, corner_radius=0)
 map_widget.pack(fill="both", expand=True)
 
-
 # Add markers and path to the map
+ARC = 40.524681764315744, -74.46524124349487, "ARC"
 marker_2 = map_widget.set_marker(40.52346671364952, -74.45821773128102, text="BSC")
 marker_3 = map_widget.set_marker(40.52361937958186, -74.43697999874263, text="LSC")
+
 path_1 = map_widget.set_path([(40.52343, -74.45796),
 (40.52341, -74.45795),
 (40.52336, -74.45793),
@@ -223,9 +226,26 @@ path_1 = map_widget.set_path([(40.52343, -74.45796),
 (40.52341, -74.43662),
 (40.52337, -74.43665),
 (40.52332, -74.43667)])
+# ...
+
+
+# Create two drop-down menus
+label_1 = ttk.Label(left_frame, text="Dropdown 1")
+label_1.grid(row=0, column=0, padx=5, pady=5)
+dropdown_1 = ttk.Combobox(left_frame, values=["BSC", "LSC"])
+dropdown_1.grid(row=1, column=0, padx=5, pady=5)
+dropdown_1.bind("<<ComboboxSelected>>", lambda event: on_select(marker_2, event))
+
+label_2 = ttk.Label(left_frame, text="Dropdown 2")
+label_2.grid(row=2, column=0, padx=5, pady=5)
+dropdown_2 = ttk.Combobox(left_frame, values=["BSC", "LSC"])
+dropdown_2.grid(row=3, column=0, padx=5, pady=5)
+dropdown_2.bind("<<ComboboxSelected>>", lambda event: on_select(marker_3, event))
+
 # Set map position
 map_widget.set_position(40.5242620, -74.4465721)
+
 map_widget.set_zoom(15)
 map_widget.max_zoom = 15
-map_widget.button_zoom_out
+
 root_tk.mainloop()
