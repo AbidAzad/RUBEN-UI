@@ -9,6 +9,12 @@ listOfLocations = {
     "LSC" : (40.52361937958186, -74.43697999874263),
     "ARC" : (40.523776007542665, -74.4648874666412)
 }
+
+
+def find_midpoint(lat1, lon1, lat2, lon2):
+    mid_lat = (lat1 + lat2) / 2
+    mid_lon = (lon1 + lon2) / 2
+    return mid_lat, mid_lon
 def generatePath(markerA, markerB):
     if(markerA.data == "NULL" or markerB.data == "NULL"):
         map_widget.delete_all_path()
@@ -23,7 +29,9 @@ def generatePath(markerA, markerB):
         if(not os.path.isfile(csv_file_path)):
             csv_file_path = f"mapPaths/{markerB.data}to{markerA.data}.csv"
             if(not os.path.isfile(csv_file_path)):
-                map_widget.set_position(listOfLocations[markerA.data][0], listOfLocations[markerA.data][1])
+                map_widget.delete_all_path()
+                x, y =find_midpoint(listOfLocations[markerA.data][0], listOfLocations[markerA.data][1], listOfLocations[markerB.data][0], listOfLocations[markerB.data][1])
+                map_widget.set_position(x, y)
                 return
         with open(csv_file_path, 'r') as file:
             csv_reader = csv.reader(file)
@@ -87,23 +95,38 @@ class CustomTkinterMapView(TkinterMapView):
     
     def button_zoom_out(self):
         pass
-
+    
 root_tk = tkinter.Tk()
-root_tk.geometry(f"{800}x{400}")
+root_tk.geometry(f"{1280}x{800}")
 root_tk.title("Map Viewing Screen")
+
+# Create a red header frame
+header_frame = tkinter.Frame(root_tk, bg="#990000", height=80)  # Adjust the height as needed
+header_frame.pack(fill="x")
+
+def go_back():
+    # Add functionality for the "Back" button here
+    print("Go back button clicked")
+back_button = tkinter.Button(header_frame, text="Back", command=go_back, bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
+back_button.pack(side="left", padx=20)
+
+# Add a label to the header with specified parameters
+header_label = tkinter.Label(header_frame, text="Where Would You Like to Go?",bg="#990000", fg="white", font=("Arial", 24, "bold"), pady=20)
+header_label.pack()
+
 
 # Create a frame for the left side
 left_frame = tkinter.Frame(root_tk)
 left_frame.pack(side="left", fill="y")
 
 
-
 # Create a frame for the map on the right side
 right_frame = tkinter.Frame(root_tk)
 right_frame.pack(side="right", fill="both", expand=True)
 
+
 # Create map widget
-map_widget = CustomTkinterMapView(right_frame, width=600, height=400, corner_radius=0)
+map_widget = CustomTkinterMapView(right_frame, width=960, height=600, corner_radius=0)  # Adjusted width and height for the map widget
 map_widget.pack(fill="both", expand=True)
 
 # Add markers and path to the map
@@ -136,7 +159,7 @@ with open(csv_file_path, 'r') as file:
 path_1 = None
 
 # Create two drop-down menus
-label_1 = ttk.Label(left_frame, text="Dropdown 1")
+label_1 = ttk.Label(left_frame, text="Starting Location")
 label_1.grid(row=0, column=0, padx=5, pady=5)
 dropdown_1 = ttk.Combobox(left_frame, values=["", "BSC", "LSC", "ARC"])
 dropdown_1.grid(row=1, column=0, padx=5, pady=5)
@@ -144,7 +167,7 @@ dropdown_1.bind("<<ComboboxSelected>>", lambda event: on_select(marker_2, event,
 # Set the default option for the first dropdown as "BSC"
 dropdown_1.set("BSC")
 
-label_2 = ttk.Label(left_frame, text="Dropdown 2")
+label_2 = ttk.Label(left_frame, text="Destination")
 label_2.grid(row=2, column=0, padx=5, pady=5)
 dropdown_2 = ttk.Combobox(left_frame, values=["", "BSC", "LSC", "ARC"])
 dropdown_2.grid(row=3, column=0, padx=5, pady=5)
