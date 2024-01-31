@@ -6,6 +6,17 @@ def on_select(event):
     # Example function to handle drop-down selection
     print("Selected item:", event.widget.get())
 
+class CustomTkinterMapView(TkinterMapView):
+    def mouse_move(self, event):
+        # Override the mouse_move() method to do nothing
+        pass
+    def mouse_zoom(self, event):
+        pass
+    
+    def button_zoom_in(self):
+        pass
+    def button_zoom_out(self):
+        pass
 root_tk = tkinter.Tk()
 root_tk.geometry(f"{800}x{400}")
 root_tk.title("Map Viewing Screen")
@@ -32,7 +43,7 @@ right_frame = tkinter.Frame(root_tk)
 right_frame.pack(side="right", fill="both", expand=True)
 
 # Create map widget
-map_widget = TkinterMapView(right_frame, width=600, height=400, corner_radius=0)
+map_widget = CustomTkinterMapView(right_frame, width=600, height=400, corner_radius=0)
 map_widget.pack(fill="both", expand=True)
 
 
@@ -215,4 +226,6 @@ path_1 = map_widget.set_path([(40.52343, -74.45796),
 # Set map position
 map_widget.set_position(40.5242620, -74.4465721)
 map_widget.set_zoom(15)
+map_widget.max_zoom = 15
+map_widget.button_zoom_out
 root_tk.mainloop()
