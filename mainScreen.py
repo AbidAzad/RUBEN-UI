@@ -105,13 +105,23 @@ class SampleApp(tk.Tk):
         self._frame.pack(fill="both", expand=True)
 
 class StartPage(tk.Frame):
-    def __init__(self, master):
-        tk.Frame.__init__(self, master)
-        
+    def __init__(self, master, **kwargs):
+    #def __init__(self, master):
+        tk.Frame.__init__(self, master, **kwargs)
+       # tk.Frame.__init__(self, master)
+        self.bind("<Configure>", self.rounded_corners)
+
         header_label = tk.Label(self, text="Hi, I'm RUBEN!", bg="#990000", fg="white", font=("Arial", 24, "bold"), pady=20)
         header_label.pack(side="top", fill="x")
 
-        button_frame = tk.Frame(self)
+    #def __init__(self, master=None, **kwargs):
+     #   tk.Frame.__init__(self, master, **kwargs)
+      #  self.bind("<Configure>", self.rounded_corners)
+
+        #button_frame = tk.Frame(self)
+        #button_frame.pack(side="top", pady=20)
+
+        button_frame = tk.Frame(self, bg="#990000")
         button_frame.pack(side="top", pady=20)
 
         self.icon1 = tk.PhotoImage(file="icons/map_marker_white.png")
@@ -122,9 +132,13 @@ class StartPage(tk.Frame):
         self.icon2 = self.icon2.subsample(50)
         self.icon3 = self.icon3.subsample(50)
 
-        button1 = tk.Button(button_frame, text="Where to?", command=lambda: master.switch_frame(PageOne), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon1, compound='left', borderwidth=4, relief="groove", padx=20, pady=10)
-        button2 = tk.Button(button_frame, text="Rutgers Database", command=lambda: button_click(2), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon2, compound='left', borderwidth=4, relief="groove", padx=20, pady=10)
-        button3 = tk.Button(button_frame, text="FAQ", command=lambda: button_click(3), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon3, compound='left', borderwidth=4, relief="groove", padx=20, pady=10)
+        button1 = ttk.Button(button_frame, text="Where to?", command=lambda: self.master.switch_frame(PageOne), style="Rounded.TButton", image=self.icon1, compound='left')
+        button2 = ttk.Button(button_frame, text="Rutgers Database", command=lambda: button_click(2), style="Rounded.TButton", image=self.icon2, compound='left')
+        button3 = ttk.Button(button_frame, text="FAQ", command=lambda: button_click(3), style="Rounded.TButton", image=self.icon3, compound='left')
+
+        style = ttk.Style()
+        style.configure("Rounded.TButton", borderwidth=4, relief="groove", font=("Arial", 32), background="#990000", foreground="white", padding=(20, 10))
+        style.layout("Rounded.TButton", [('Button.button', {'children': [('Button.focus', {'children': [('Button.padding', {'children': [('Button.label', {'side': 'left', 'expand': 'yes'})]})]})]})])
 
         button1.pack(side=tk.LEFT, padx=50, pady= 200)
         button2.pack(side=tk.LEFT, padx=50, pady= 200)
@@ -135,6 +149,15 @@ class StartPage(tk.Frame):
         self.columnconfigure(2, weight=1)
 
         self.rowconfigure(1, weight=1)
+
+    def rounded_corners(self, event=None):
+        self.winfo_toplevel().attributes('-transparentcolor', self["bg"])
+        self.update_idletasks()
+        self.config(
+            compound='c',
+            background=self["bg"],
+            highlightbackground=self["bg"]
+        )
 
 class PageOne(tk.Frame):
     def __init__(self, master):
