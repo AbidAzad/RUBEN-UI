@@ -21,7 +21,8 @@ class CustomTkinterMapView(TkinterMapView):
 listOfLocations = {
     "BSC": (40.52346671364952, -74.45821773128102),
     "LSC": (40.52361937958186, -74.43697999874263),
-    "ARC": (40.523776007542665, -74.4648874666412)
+    "ARC": (40.523776007542665, -74.4648874666412),
+    "RWH": (40.52484567146845, -74.4594846000904)
 }
 def button_click(button_number):
     print(f"Button {button_number} clicked!")
