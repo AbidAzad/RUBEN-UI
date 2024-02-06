@@ -123,7 +123,7 @@ class StartPage(tk.Frame):
         self.icon3 = self.icon3.subsample(50)
 
         button1 = tk.Button(button_frame, text="Where to?", command=lambda: master.switch_frame(PageOne), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon1, compound='left')
-        button2 = tk.Button(button_frame, text="Rutgers Database", command=lambda: button_click(2), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon2, compound='left')
+        button2 = tk.Button(button_frame, text="Rutgers Database", command=lambda: master.switch_frame(PageTwo), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon2, compound='left')
         button3 = tk.Button(button_frame, text="FAQ", command=lambda: button_click(3), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon3, compound='left')
 
         button1.pack(side=tk.LEFT, padx=50, pady= 200)
@@ -196,11 +196,16 @@ class PageOne(tk.Frame):
         map_widget.set_zoom(15)
         map_widget.max_zoom = 15
 class PageTwo(tk.Frame):
-    def __init__(self, master):
+     def __init__(self, master):
         tk.Frame.__init__(self, master)
-        tk.Label(self, text="This is page two").pack(side="top", fill="x", pady=10)
-        tk.Button(self, text="Return to start page",
-                  command=lambda: master.switch_frame(StartPage)).pack()
+        header_frame = tk.Frame(self, bg="#990000", height=80)
+        header_frame.pack(fill="x")
+
+        back_button = tk.Button(header_frame, text="Back", command=lambda: master.switch_frame(StartPage), bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
+        back_button.pack(side="left", padx=20)
+        
+        header_label = tk.Label(header_frame, text="What do you want to Know?", bg="#990000", fg="white", font=("Arial", 24, "bold"), pady=20)
+        header_label.pack()
 
 if __name__ == "__main__":
     app = SampleApp()
