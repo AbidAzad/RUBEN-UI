@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkintermapview import TkinterMapView
 import csv
 import os
+import tkinter.simpledialog
 
 class CustomTkinterMapView(TkinterMapView):
     def mouse_move(self, event):
@@ -181,14 +182,14 @@ class PageOne(tk.Frame):
 
         label_1 = ttk.Label(left_frame, text="Starting Location")
         label_1.grid(row=0, column=0, padx=5, pady=5)
-        dropdown_1 = ttk.Combobox(left_frame, values=["", "BSC", "LSC", "ARC"])
+        dropdown_1 = ttk.Combobox(left_frame, values=[""] + list(listOfLocations.keys()))
         dropdown_1.grid(row=1, column=0, padx=5, pady=5)
         dropdown_1.bind("<<ComboboxSelected>>", lambda event: on_select(marker_2, event, dropdown_2, marker_3, map_widget))
         dropdown_1.set("BSC")
 
         label_2 = ttk.Label(left_frame, text="Destination")
         label_2.grid(row=2, column=0, padx=5, pady=5)
-        dropdown_2 = ttk.Combobox(left_frame, values=["", "BSC", "LSC", "ARC"])
+        dropdown_2 = ttk.Combobox(left_frame, values=[""] + list(listOfLocations.keys()))
         dropdown_2.grid(row=3, column=0, padx=5, pady=5)
         dropdown_2.bind("<<ComboboxSelected>>", lambda event: on_select(marker_3, event, dropdown_1, marker_2, map_widget))
 
@@ -198,6 +199,18 @@ class PageOne(tk.Frame):
 class PageTwo(tk.Frame):
      def __init__(self, master):
         tk.Frame.__init__(self, master)
+        sample_qa_data = {
+            "What is the largest mammal on Earth?": "The blue whale is the largest mammal on Earth.",
+            "How many continents are there?": "There are seven continents: Africa, Antarctica, Asia, Europe, North America, Australia (Oceania), and South America.",
+            "Who wrote 'Romeo and Juliet'?": "William Shakespeare wrote 'Romeo and Juliet'.",
+            "What is the capital of Japan?": "The capital of Japan is Tokyo.",
+            "What is the boiling point of water in Celsius?": "The boiling point of water in Celsius is 100 degrees.",
+            "Who discovered penicillin?": "Alexander Fleming discovered penicillin.",
+            "What is the currency of Brazil?": "The currency of Brazil is the Brazilian Real (BRL).",
+            "What is the speed of light?": "The speed of light in a vacuum is approximately 299,792 kilometers per second.",
+            "Who painted the Mona Lisa?": "Leonardo da Vinci painted the Mona Lisa.",
+            "What is the meaning of life, the universe, and everything?": "According to Douglas Adams' 'The Hitchhiker's Guide to the Galaxy,' the answer is 42.",
+        }        
         header_frame = tk.Frame(self, bg="#990000", height=80)
         header_frame.pack(fill="x")
 
@@ -206,6 +219,22 @@ class PageTwo(tk.Frame):
         
         header_label = tk.Label(header_frame, text="What do you want to Know?", bg="#990000", fg="white", font=("Arial", 24, "bold"), pady=20)
         header_label.pack()
+        
+        # Create the search bar frame on the left side
+        search_frame = tk.Frame(self, bg="#CCCCCC", width=200)  # Adjust the width as needed
+        search_frame.pack(side="left", fill="y")
+
+        # Create the search label
+        search_label = tk.Label(search_frame, text="Search:", bg="#CCCCCC", font=("Arial", 16, "bold"), pady=10)
+        search_label.pack()
+
+        # Create the entry widget for the search bar
+        search_entry = tk.Entry(search_frame, font=("Arial", 14))
+        search_entry.pack(pady=10)
+        
+        # Create the search button
+        search_button = tk.Button(search_frame, text="Search", command=button_click(3), bg="#990000", fg="white", font=("Arial", 14, "bold"), padx=10)
+        search_button.pack()
 
 if __name__ == "__main__":
     app = SampleApp()
