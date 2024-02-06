@@ -1,8 +1,19 @@
 import tkinter as tk
+from PIL import Image, ImageTk
 
 # Create the main window
 root = tk.Tk()
 root.title("Main Window")
+
+# Load the image
+image_path = "robot.jpg" 
+image = Image.open(image_path)
+image = image.resize((300, 300))
+photo = ImageTk.PhotoImage(image)
+
+# Create a label widget to display the image
+label_image = tk.Label(root, image = photo)
+label_image.pack(pady = 20)
 
 # Information to display on the faq page
 faq_text = """Frequently Asked Questions:
@@ -22,3 +33,4 @@ label_faq.pack(pady = 20)
 
 # Start the Tkinter event loop
 root.mainloop()
+
