@@ -4,6 +4,7 @@ from tkintermapview import TkinterMapView
 import csv
 import os
 from PIL import Image, ImageTk
+from fuzzywuzzy import process
 class CustomTkinterMapView(TkinterMapView):
     def mouse_move(self, event):
         # Override the mouse_move() method to do nothing
@@ -24,16 +25,14 @@ listOfLocations = {
     "RWH": (40.52484567146845, -74.4594846000904),
     "SEC": (40.52264886068991, -74.46291943815686),
     "HILL": (40.52219869380479, -74.46269730376937),
+    "ARC": (40.523875826670384, -74.46490827123226),
     "EE": (40.521919361103436, -74.4608464326052),
     "COR": (40.521425135381364, -74.46139955251431),
     "CCB": (40.52471158885787, -74.46215078958433),
     "PHY-LH": (40.522463226834915, -74.46342747105683),
     "BME": (40.52425650913521, -74.46090857718987),
     "SRN" : (40.52301253291932, -74.4647242045775), #Physics and Astrinomy Building
-    "CABM" : (40.52425101367686, -74.46993589110723),
-    "Woody's Cafe": (40.52461800211061, -74.46863770197551),
-    "Busch Sweets": (40.525294, -74.459073)
-
+    "CABM" : (40.52425101367686, -74.46993589110723)
 
 }
 def button_click(button_number):
@@ -210,8 +209,10 @@ class PageOne(tk.Frame):
         map_widget.set_zoom(15)
         map_widget.max_zoom = 15
 class PageTwo(tk.Frame):
-     def __init__(self, master):
+    def __init__(self, master):
         tk.Frame.__init__(self, master)
+
+        # Sample QA data
         sample_qa_data = {
             "What is the largest mammal on Earth?": "The blue whale is the largest mammal on Earth.",
             "How many continents are there?": "There are seven continents: Africa, Antarctica, Asia, Europe, North America, Australia (Oceania), and South America.",
@@ -223,16 +224,22 @@ class PageTwo(tk.Frame):
             "What is the speed of light?": "The speed of light in a vacuum is approximately 299,792 kilometers per second.",
             "Who painted the Mona Lisa?": "Leonardo da Vinci painted the Mona Lisa.",
             "What is the meaning of life, the universe, and everything?": "According to Douglas Adams' 'The Hitchhiker's Guide to the Galaxy,' the answer is 42.",
-        }        
+        }
+
+        # Header Frame
         header_frame = tk.Frame(self, bg="#990000", height=80)
         header_frame.pack(fill="x")
 
-        back_button = tk.Button(header_frame, text="Back", command=lambda: master.switch_frame(StartPage), bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
+        # Back button
+        back_button = tk.Button(header_frame, text="Back", command=lambda: master.switch_frame(StartPage),
+                                bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
         back_button.pack(side="left", padx=20)
-        
-        header_label = tk.Label(header_frame, text="What do you want to Know?", bg="#990000", fg="white", font=("Arial", 24, "bold"), pady=20)
+
+        # Header Label
+        header_label = tk.Label(header_frame, text="What do you want to Know?", bg="#990000", fg="white",
+                                font=("Arial", 24, "bold"), pady=20)
         header_label.pack()
-        
+
         # Create the search bar frame on the left side
         search_frame = tk.Frame(self, bg="#CCCCCC", width=200)  # Adjust the width as needed
         search_frame.pack(side="left", fill="y")
@@ -244,10 +251,90 @@ class PageTwo(tk.Frame):
         # Create the entry widget for the search bar
         search_entry = tk.Entry(search_frame, font=("Arial", 14))
         search_entry.pack(pady=10)
-        
+
         # Create the search button
-        search_button = tk.Button(search_frame, text="Search", command=button_click(3), bg="#990000", fg="white", font=("Arial", 14, "bold"), padx=10)
+        search_button = tk.Button(search_frame, text="Search", command=lambda: self.search_question(search_entry.get()),
+                                  bg="#990000", fg="white", font=("Arial", 14, "bold"), padx=10)
         search_button.pack()
+
+        # Listbox to display clickable questions
+        self.question_listbox = tk.Listbox(self, selectmode=tk.SINGLE, exportselection=False)
+        for question in sample_qa_data.keys():
+            self.question_listbox.insert(tk.END, question)
+        self.question_listbox.pack(side="left", fill="both", expand=True)
+        self.question_listbox.bind("<ButtonRelease-1>", lambda event: self.display_answer(event, sample_qa_data))
+
+        # Frame on the right side to display the answer
+        self.answer_frame = tk.Frame(self, bg="#CCCCCC", width=500)
+
+    def search_question(self, query):
+        # Clear existing items in the listbox
+        self.question_listbox.delete(0, tk.END)
+
+        # Sample QA data
+        sample_qa_data = {
+            "What is the largest mammal on Earth?": "The blue whale is the largest mammal on Earth.",
+            "How many continents are there?": "There are seven continents: Africa, Antarctica, Asia, Europe, North America, Australia (Oceania), and South America.",
+            "Who wrote 'Romeo and Juliet'?": "William Shakespeare wrote 'Romeo and Juliet'.",
+            "What is the capital of Japan?": "The capital of Japan is Tokyo.",
+            "What is the boiling point of water in Celsius?": "The boiling point of water in Celsius is 100 degrees.",
+            "Who discovered penicillin?": "Alexander Fleming discovered penicillin.",
+            "What is the currency of Brazil?": "The currency of Brazil is the Brazilian Real (BRL).",
+            "What is the speed of light?": "The speed of light in a vacuum is approximately 299,792 kilometers per second.",
+            "Who painted the Mona Lisa?": "Leonardo da Vinci painted the Mona Lisa.",
+            "What is the meaning of life, the universe, and everything?": "According to Douglas Adams' 'The Hitchhiker's Guide to the Galaxy,' the answer is 42.",
+        }
+
+
+        # Fuzzy search the questions with a higher threshold (e.g., 80)
+        matched_questions = process.extractBests(query, sample_qa_data.keys(), score_cutoff=80)
+
+        # Sort the matched questions based on similarity scores
+        matched_questions = sorted(matched_questions, key=lambda x: x[1], reverse=True)
+
+        # Display matched questions in the listbox
+        for question, score in matched_questions:
+            self.question_listbox.insert(tk.END, f"{question}")
+
+        # If no matches found, provide a message
+        if not matched_questions:
+            self.question_listbox.insert(tk.END, "No matching questions found.")
+
+    def display_answer(self, event, sample_qa_data):
+        selected_index = self.question_listbox.curselection()
+        if selected_index:
+            selected_question = self.question_listbox.get(selected_index)
+            answer = sample_qa_data.get(selected_question, "Answer not available.")
+            self.show_answer(answer)
+
+    def show_answer(self, answer):
+        # Hide the listbox
+        self.question_listbox.pack_forget()
+
+        # Clear existing widgets in the answer_frame
+        for widget in self.answer_frame.winfo_children():
+            widget.destroy()
+
+        # Label to display the answer
+        answer_label = tk.Label(self.answer_frame, text=answer, bg="#CCCCCC", font=("Arial", 14), pady=10)
+        answer_label.pack()
+
+        # Button to go back to the list
+        back_button = tk.Button(self.answer_frame, text="Back to List", command=self.back_to_list,
+                                bg="#990000", fg="white", font=("Arial", 14, "bold"), padx=10)
+        back_button.pack()
+
+        # Pack the answer_frame to display it
+        self.answer_frame.pack(side="right", fill="both", expand=True)
+
+    def back_to_list(self):
+        # Hide the answer_frame
+        self.answer_frame.pack_forget()
+
+        # Pack the listbox to display it
+        self.question_listbox.pack(side="left", fill="both", expand=True)
+
+
 class PageThree(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
