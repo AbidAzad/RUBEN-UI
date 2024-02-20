@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import PhotoImage
 from tkintermapview import TkinterMapView
 import csv
 import os
@@ -123,7 +124,7 @@ class SampleApp(tk.Tk):
 class StartPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
-        
+
         header_label = tk.Label(self, text="Hi, I'm RUBEN!", bg="#990000", fg="white", font=("Arial", 24, "bold"), pady=20)
         header_label.pack(side="top", fill="x")
 
@@ -134,13 +135,13 @@ class StartPage(tk.Frame):
         self.icon_database = tk.PhotoImage(file="icons/database_icon_white.png")
         self.icon_faq = tk.PhotoImage(file="icons/Question_mark_white.png")
 
-        self.icon_map = self.icon_map.subsample(50)  
+        self.icon_map = self.icon_map.subsample(50)
         self.icon_database = self.icon_database.subsample(50)
         self.icon_faq = self.icon_faq.subsample(50)
 
-        button_map = tk.Button(button_frame, text="Where to?", command=lambda: master.switch_frame(MapPage), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon_map, compound='left')
-        button_database = tk.Button(button_frame, text="Rutgers Database", command=lambda: master.switch_frame(SearchPage), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon_database, compound='left')
-        button_faq = tk.Button(button_frame, text="FAQ", command=lambda: master.switch_frame(FAQPage), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon_faq, compound='left')
+        button_map = tk.Button(button_frame, text="Where to?", command=lambda: master.switch_frame(MapPage), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon_map, compound='left', borderwidth=3, relief="groove", highlightthickness=0)
+        button_database = tk.Button(button_frame, text="Rutgers Database", command=lambda: master.switch_frame(SearchPage), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon_database, compound='left', borderwidth=3, relief="groove", highlightthickness=0)
+        button_faq = tk.Button(button_frame, text="FAQ", command=lambda: master.switch_frame(FAQPage), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon_faq, compound='left', borderwidth=3, relief="groove", highlightthickness=0)
 
         button_map.pack(side=tk.LEFT, padx=50, pady=200)
         button_database.pack(side=tk.LEFT, padx=50, pady=200)
@@ -151,7 +152,6 @@ class StartPage(tk.Frame):
         self.columnconfigure(2, weight=1)
 
         self.rowconfigure(1, weight=1)
-
 class MapPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
@@ -313,39 +313,36 @@ class SearchPage(tk.Frame):
 class FAQPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
-        
+        script_directory = os.path.dirname(os.path.abspath(__file__))
+        image_path = os.path.join(script_directory, "icons\FAQBackground.jpeg")
+        # Load the image file using PhotoImage
+        image = Image.open(image_path)
+        resized_image = image.resize((1450, 700), Image.ANTIALIAS)
+
+        photo = ImageTk.PhotoImage(resized_image)
+
+        # Create the label with the PhotoImage object
+        bg_image = tk.Label(self, image=photo, text="Frequently Asked Questions:\n\n"
+                                                    "1. RUBEN, what does your name stand for?\n"
+                                                    "My name stands for Remote Utility Bot for Education and Navigation</i>\n\n"
+                                                    "2. What is your mission?\n"
+                                                    "Welcome! My mission is to help mitigate the complexity students \nmay deal with when first entering the university. I will provide clear directions to specific locations.\n\n"
+                                                    "3. Who created you? \n"
+                                                    "Jeff Acevedo, Abid Azad, Carina Manek, Samuel Fabian, and Sampat Pachade for their senior design project",
+                            padx=20, pady=20, compound="center", fg="pink", font=("Helvetica", 20, "bold"), justify="left", wraplength=600)
+        bg_image.image = photo  # To prevent garbage collection
+        bg_image.place(relheight=1, relwidth=1)
+
         header_frame = tk.Frame(self, bg="#990000", height=80)
         header_frame.pack(fill="x")
 
-        back_button = tk.Button(header_frame, text="Back", command=lambda: master.switch_frame(StartPage), bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
+        back_button = tk.Button(header_frame, text="Back", command=lambda: master.switch_frame(StartPage),
+                                bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
         back_button.pack(side="left", padx=20)
-        
-        header_label = tk.Label(header_frame, text="Frequently Asked Questions", bg="#990000", fg="white", font=("Arial", 24, "bold"), pady=20)
+
+        header_label = tk.Label(header_frame, text="Frequently Asked Questions", bg="#990000", fg="white",
+                                font=("Arial", 24, "bold"), pady=20)
         header_label.pack()
-
-        image_path = "robot.jpg"
-        image = Image.open(image_path)
-        image = image.resize((300, 300))
-        photo = ImageTk.PhotoImage(image)
-
-        label_image = tk.Label(self, image=photo)
-        label_image.image = photo  
-        label_image.pack(pady=20)
-
-        faq_text = """Frequently Asked Questions:
-
-1. RUBEN, what does your name stand for?
-   My name stands for Remote Utility Bot for Education and Navigation
-
-2. What is your mission?
-   Welcome! My mission is to help mitigate the complexity students may deal with when first entering the university. I will provide clear directions to specific locations.
-
-3. Who created you? 
-   Jeff Acevedo, Abid Azad, Carina Manek, Samuel Fabian, and Sampat Pachade for their senior design project"""
-
-        label_faq = tk.Label(self, text=faq_text, padx=20, pady=20)
-        label_faq.pack(pady=20)
-
 if __name__ == "__main__":
     app = SampleApp()
     app.mainloop()
