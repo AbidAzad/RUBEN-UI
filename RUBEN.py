@@ -143,15 +143,30 @@ class StartPage(tk.Frame):
         button_database = tk.Button(button_frame, text="Rutgers Database", command=lambda: master.switch_frame(SearchPage), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon_database, compound='left', borderwidth=3, relief="groove", highlightthickness=0)
         button_faq = tk.Button(button_frame, text="FAQ", command=lambda: master.switch_frame(FAQPage), bg="#990000", fg="white", font=("Arial", 32), bd=3, image=self.icon_faq, compound='left', borderwidth=3, relief="groove", highlightthickness=0)
 
-        button_map.pack(side=tk.LEFT, padx=50, pady=200)
-        button_database.pack(side=tk.LEFT, padx=50, pady=200)
-        button_faq.pack(side=tk.LEFT, padx=50, pady=200)
+        button_map.pack(side=tk.LEFT, padx=40, pady=20)
+        button_database.pack(side=tk.LEFT, padx=40, pady=20)
+        button_faq.pack(side=tk.LEFT, padx=40, pady=20)
+
+        # Second row of buttons
+        button_frame_row2 = tk.Frame(self)
+        button_frame_row2.pack(side="top", pady=20)
+
+        button_events = tk.Button(button_frame_row2, text="Events", command=lambda: master.switch_frame(EventsPage), bg="#990000", fg="white", font=("Arial", 32), bd=3, compound='left', borderwidth=3, relief="groove", highlightthickness=0, width=7)
+        button_emergency = tk.Button(button_frame_row2, text="Emergency Contact", command=lambda: master.switch_frame(EmergencyPage), bg="#990000", fg="white", font=("Arial", 32), bd=3, compound='left', borderwidth=3, relief="groove", highlightthickness=0, width=18)
+        button_lostAndFound = tk.Button(button_frame_row2, text="Lost and Found", command=lambda: master.switch_frame(LostAndFoundPage), bg="#990000", fg="white", font=("Arial", 32), bd=3, compound='left', borderwidth=3, relief="groove", highlightthickness=0, width=12)
+
+        button_events.pack(side=tk.LEFT, padx=20, pady=10)
+        button_emergency.pack(side=tk.LEFT, padx=20, pady=10)
+        button_lostAndFound.pack(side=tk.LEFT, padx=20, pady=10)
+
 
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.columnconfigure(2, weight=1)
 
         self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)  # Add a new row configuration
+
 class MapPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
@@ -343,6 +358,50 @@ class FAQPage(tk.Frame):
         header_label = tk.Label(header_frame, text="Frequently Asked Questions", bg="#990000", fg="white",
                                 font=("Arial", 24, "bold"), pady=20)
         header_label.pack()
+        
+class EventsPage(tk.Frame):
+    def __init__(self, master):
+        tk.Frame.__init__(self, master)
+        header_frame = tk.Frame(self, bg="#990000", height=80)
+        header_frame.pack(fill="x")
+
+        back_button = tk.Button(header_frame, text="Back", command=lambda: master.switch_frame(StartPage),
+                                bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
+        back_button.pack(side="left", padx=20)
+
+        header_label = tk.Label(header_frame, text="Current Events", bg="#990000", fg="white",
+                                font=("Arial", 24, "bold"), pady=20)
+        header_label.pack()
+        
+        #FINISH THE REMAINDER OF THE PAGE 
+class EmergencyPage(tk.Frame):
+    def __init__(self, master):
+        tk.Frame.__init__(self, master)
+        header_frame = tk.Frame(self, bg="#990000", height=80)
+        header_frame.pack(fill="x")
+
+        back_button = tk.Button(header_frame, text="Back", command=lambda: master.switch_frame(StartPage),
+                                bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
+        back_button.pack(side="left", padx=20)
+
+        header_label = tk.Label(header_frame, text="Emergency Contacts", bg="#990000", fg="white",
+                                font=("Arial", 24, "bold"), pady=20)
+        header_label.pack()
+        #FINISH THE REMAINDER OF THE PAGE 
+class LostAndFoundPage(tk.Frame):
+    def __init__(self, master):
+        tk.Frame.__init__(self, master)
+        header_frame = tk.Frame(self, bg="#990000", height=80)
+        header_frame.pack(fill="x")
+
+        back_button = tk.Button(header_frame, text="Back", command=lambda: master.switch_frame(StartPage),
+                                bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
+        back_button.pack(side="left", padx=20)
+
+        header_label = tk.Label(header_frame, text="Lost and Found", bg="#990000", fg="white",
+                                font=("Arial", 24, "bold"), pady=20)
+        header_label.pack()
+        #FINISH THE REMAINDER OF THE PAGE 
 if __name__ == "__main__":
     app = SampleApp()
     app.mainloop()
