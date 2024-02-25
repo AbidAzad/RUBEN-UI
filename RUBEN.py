@@ -4,6 +4,7 @@ from tkinter import PhotoImage
 from tkintermapview import TkinterMapView
 import csv
 import os
+import sqlite3
 from PIL import Image, ImageTk
 from fuzzywuzzy import process
 
@@ -374,6 +375,33 @@ class EventsPage(tk.Frame):
         header_label.pack()
         
         #FINISH THE REMAINDER OF THE PAGE 
+
+        # Fetch events from the database and create buttons for each event
+        conn = sqlite3.connect('data2.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT event_name, event_location FROM Event_Data")
+        events = cursor.fetchall()
+        conn.close()
+
+        for event in events:
+            event_name, event_location = event
+            button_text = f"{event_name} - {event_location}"
+            button = tk.Button(self, text=button_text, command=lambda loc=event_location: self.display_map(loc))
+            button.pack(pady=10)
+
+    def display_map(self, location):
+        map_window = tk.Toplevel()
+        map_window.title("Google Map Viewer")
+
+        gmap_widget = TkinterMapView(map_window, width=750, height=600)
+        gmap_widget.pack(fill="both", expand=True)
+
+        gmap_widget.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
+
+        mrkr = gmap_widget.set_address(location, marker=True)
+        mrkr.set_text("Here")
+        gmap_widget.set_zoom(17)
+        
 class EmergencyPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
