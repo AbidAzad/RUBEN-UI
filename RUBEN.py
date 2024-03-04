@@ -479,6 +479,21 @@ class LostAndFoundPage(tk.Frame):
                                 font=("Arial", 24, "bold"), pady=20)
         header_label.pack()
         #FINISH THE REMAINDER OF THE PAGE 
+
+        conn2 = sqlite3.connect('L&F_Rut_DB.db')
+        cursor2 = conn2.cursor()
+        cursor2.execute("SELECT Items, Description FROM Lost_And_Found_DB")
+        itemsSel = cursor2.fetchall()
+        conn2.close()
+
+        for itemView in itemsSel:
+            Items, Description = itemView
+            button_text = f"{Items} - {Description}"
+            button = tk.Button(self, text=button_text)
+            button.pack(pady=10)
+
+
+
 if __name__ == "__main__":
     app = SampleApp()
     app.mainloop()
