@@ -222,9 +222,9 @@ class MapPage(tk.Frame):
         for location in [""] + list(location_coordinates.keys()):
             listbox_start.insert(END, location)
 
-        listbox_start_scrollbar = Scrollbar(left_frame, command=listbox_start.yview)
-        listbox_start_scrollbar.grid(row=1, column=1, sticky='ns')
-        listbox_start.configure(yscrollcommand=listbox_start_scrollbar.set)
+        scrollbar_start = ttk.Scrollbar(left_frame, orient="vertical", command=listbox_start.yview)
+        scrollbar_start.grid(row=1, column=1, sticky="ns")
+        listbox_start.configure(yscrollcommand=scrollbar_start.set)
 
         listbox_start.bind("<<ListboxSelect>>", lambda event: on_select(marker_start, event, listbox_end, marker_end, map_widget))
         listbox_start.select_set(0)
@@ -239,9 +239,9 @@ class MapPage(tk.Frame):
         for location in [""] + list(location_coordinates.keys()):
             listbox_end.insert(END, location)
 
-        listbox_end_scrollbar = Scrollbar(left_frame, command=listbox_end.yview)
-        listbox_end_scrollbar.grid(row=3, column=1, sticky='ns')
-        listbox_end.configure(yscrollcommand=listbox_end_scrollbar.set)
+        scrollbar_end = ttk.Scrollbar(left_frame, orient="vertical", command=listbox_end.yview)
+        scrollbar_end.grid(row=3, column=1, sticky="ns")
+        listbox_end.configure(yscrollcommand=scrollbar_end.set)
 
         listbox_end.bind("<<ListboxSelect>>", lambda event: on_select(marker_end, event, listbox_start, marker_start, map_widget))
         listbox_end.select_set(0)
