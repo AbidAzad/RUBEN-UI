@@ -108,7 +108,32 @@ def on_select(marker, event, other_dropdown, other_marker, map_widget):
         other_marker.data = "NULL"
 
     generate_path(marker, other_marker, map_widget)
+def on_select(marker, event, other_listbox, other_marker, map_widget):
+    selected_index = event.widget.curselection()
+    
+    if not selected_index:
+        marker.set_position(0, 0)
+        marker.data = "NULL"
+    else:
+        selected_location = event.widget.get(selected_index)
+        marker.set_position(location_coordinates[selected_location][0], location_coordinates[selected_location][1])
+        marker.set_text(selected_location)
+        marker.data = selected_location
 
+    other_listbox_value = other_listbox.curselection()
+    if other_listbox_value == selected_index:
+        other_listbox.select_clear(0, 'end')
+        other_marker.set_position(0, 0)
+        other_marker.data = "NULL"
+
+    generate_path(marker, other_marker, map_widget)
+
+def on_listbox_motion(event, listbox):
+    yview = listbox.yview()
+    scroll_fraction = 0.01  # Adjust this value to control the scroll speed
+    yview_moveto = max(0, min(1, yview[0] - event.delta * scroll_fraction))
+    listbox.yview_moveto(yview_moveto)
+    
 class SampleApp(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
@@ -222,11 +247,12 @@ class MapPage(tk.Frame):
         for location in [""] + list(location_coordinates.keys()):
             listbox_start.insert(END, location)
 
-        scrollbar_start = ttk.Scrollbar(left_frame, orient="vertical", command=listbox_start.yview)
+        scrollbar_start = Scrollbar(left_frame, command=listbox_start.yview)
         scrollbar_start.grid(row=1, column=1, sticky="ns")
         listbox_start.configure(yscrollcommand=scrollbar_start.set)
 
         listbox_start.bind("<<ListboxSelect>>", lambda event: on_select(marker_start, event, listbox_end, marker_end, map_widget))
+        listbox_start.bind("<B1-Motion>", lambda event: on_listbox_motion(event, listbox_start))
         listbox_start.select_set(0)
         listbox_start.activate(0)
 
@@ -239,11 +265,12 @@ class MapPage(tk.Frame):
         for location in [""] + list(location_coordinates.keys()):
             listbox_end.insert(END, location)
 
-        scrollbar_end = ttk.Scrollbar(left_frame, orient="vertical", command=listbox_end.yview)
+        scrollbar_end = Scrollbar(left_frame, command=listbox_end.yview)
         scrollbar_end.grid(row=3, column=1, sticky="ns")
         listbox_end.configure(yscrollcommand=scrollbar_end.set)
 
         listbox_end.bind("<<ListboxSelect>>", lambda event: on_select(marker_end, event, listbox_start, marker_start, map_widget))
+        listbox_end.bind("<B1-Motion>", lambda event: on_listbox_motion(event, listbox_end))
         listbox_end.select_set(0)
         listbox_end.activate(0)
         
