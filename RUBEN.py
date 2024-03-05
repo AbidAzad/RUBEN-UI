@@ -7,6 +7,7 @@ import os
 import sqlite3
 from PIL import Image, ImageTk
 from fuzzywuzzy import process
+from tkinter import ttk, Listbox, END
 
 class CustomTkinterMapView(TkinterMapView):
     def mouse_move(self, event):
@@ -89,18 +90,20 @@ def generate_path(marker_start, marker_end, map_widget):
             map_widget.set_position(mid_latitude, mid_longitude)
 
 def on_select(marker, event, other_dropdown, other_marker, map_widget):
-    selected_location = event.widget.get()
-    if selected_location == "":
+    selected_index = event.widget.curselection()
+    
+    if not selected_index:  # Check if the selection is not empty
         marker.set_position(0, 0)
         marker.data = "NULL"
     else:
+        selected_location = event.widget.get(selected_index)
         marker.set_position(location_coordinates[selected_location][0], location_coordinates[selected_location][1])
         marker.set_text(selected_location)
         marker.data = selected_location
 
-    other_dropdown_value = other_dropdown.get()
-    if other_dropdown_value == selected_location:
-        other_dropdown.set("")  
+    other_dropdown_value = other_dropdown.curselection()
+    if other_dropdown_value == selected_index:
+        other_dropdown.select_clear(0, 'end')
         other_marker.set_position(0, 0)
         other_marker.data = "NULL"
 
@@ -213,17 +216,27 @@ class MapPage(tk.Frame):
 
         label_start = ttk.Label(left_frame, text="Starting Location")
         label_start.grid(row=0, column=0, padx=5, pady=5)
-        dropdown_start = ttk.Combobox(left_frame, values=[""] + list(location_coordinates.keys()))
-        dropdown_start.grid(row=1, column=0, padx=5, pady=5)
-        dropdown_start.bind("<<ComboboxSelected>>", lambda event: on_select(marker_start, event, dropdown_end, marker_end, map_widget))
-        dropdown_start.set("BSC")
+
+        listbox_start = Listbox(left_frame, selectmode="single", exportselection=0)
+        listbox_start.grid(row=1, column=0, padx=5, pady=5)
+        for location in [""] + list(location_coordinates.keys()):
+            listbox_start.insert(END, location)
+
+        listbox_start.bind("<<ListboxSelect>>", lambda event: on_select(marker_start, event, listbox_end, marker_end, map_widget))
+        listbox_start.select_set(0)  # Select the default value
+        listbox_start.activate(0)
 
         label_end = ttk.Label(left_frame, text="Destination")
         label_end.grid(row=2, column=0, padx=5, pady=5)
-        dropdown_end = ttk.Combobox(left_frame, values=[""] + list(location_coordinates.keys()))
-        dropdown_end.grid(row=3, column=0, padx=5, pady=5)
-        dropdown_end.bind("<<ComboboxSelected>>", lambda event: on_select(marker_end, event, dropdown_start, marker_start, map_widget))
 
+        listbox_end = Listbox(left_frame, selectmode="single", exportselection=0)
+        listbox_end.grid(row=3, column=0, padx=5, pady=5)
+        for location in [""] + list(location_coordinates.keys()):
+            listbox_end.insert(END, location)
+
+        listbox_end.bind("<<ListboxSelect>>", lambda event: on_select(marker_end, event, listbox_start, marker_start, map_widget))
+        listbox_end.select_set(0)  # Select the default value
+        listbox_end.activate(0)
         map_widget.set_position(40.52346671364952, -74.45821773128102)
         map_widget.set_zoom(15)
         map_widget.max_zoom = 15
