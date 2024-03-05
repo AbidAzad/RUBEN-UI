@@ -128,11 +128,22 @@ def on_select(marker, event, other_listbox, other_marker, map_widget):
 
     generate_path(marker, other_marker, map_widget)
 
-def on_listbox_motion(event, listbox):
+def on_listbox_motion(event, listbox, start_y):
     yview = listbox.yview()
     scroll_fraction = 0.01  # Adjust this value to control the scroll speed
-    yview_moveto = max(0, min(1, yview[0] - event.delta * scroll_fraction))
+    delta_y = event.y - start_y
+    yview_moveto = max(0, min(1, yview[0] - delta_y * scroll_fraction))
     listbox.yview_moveto(yview_moveto)
+
+def start_scroll(event):
+    event.widget.scan_mark(event.x, event.y)
+
+def on_listbox_press(event, listbox):
+    listbox.scan_mark(event.x, event.y)
+
+def on_listbox_release(event, listbox, start_y):
+    on_listbox_motion(event, listbox, start_y)
+    listbox.scan_dragto(event.x, event.y)
     
 class SampleApp(tk.Tk):
     def __init__(self):
@@ -252,7 +263,9 @@ class MapPage(tk.Frame):
         listbox_start.configure(yscrollcommand=scrollbar_start.set)
 
         listbox_start.bind("<<ListboxSelect>>", lambda event: on_select(marker_start, event, listbox_end, marker_end, map_widget))
-        listbox_start.bind("<B1-Motion>", lambda event: on_listbox_motion(event, listbox_start))
+        listbox_start.bind("<B1-Motion>", lambda event: on_listbox_motion(event, listbox_start, event.y))
+        listbox_start.bind("<ButtonPress-1>", lambda event: on_listbox_press(event, listbox_start))
+        listbox_start.bind("<ButtonRelease-1>", lambda event: on_listbox_release(event, listbox_start, event.y))
         listbox_start.select_set(0)
         listbox_start.activate(0)
 
@@ -270,10 +283,11 @@ class MapPage(tk.Frame):
         listbox_end.configure(yscrollcommand=scrollbar_end.set)
 
         listbox_end.bind("<<ListboxSelect>>", lambda event: on_select(marker_end, event, listbox_start, marker_start, map_widget))
-        listbox_end.bind("<B1-Motion>", lambda event: on_listbox_motion(event, listbox_end))
+        listbox_end.bind("<B1-Motion>", lambda event: on_listbox_motion(event, listbox_end, event.y))
+        listbox_end.bind("<ButtonPress-1>", lambda event: on_listbox_press(event, listbox_end))
+        listbox_end.bind("<ButtonRelease-1>", lambda event: on_listbox_release(event, listbox_end, event.y))
         listbox_end.select_set(0)
         listbox_end.activate(0)
-        
         map_widget.set_position(40.52346671364952, -74.45821773128102)
         map_widget.set_zoom(15)
         map_widget.max_zoom = 15
