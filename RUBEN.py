@@ -10,6 +10,7 @@ from fuzzywuzzy import process
 from tkinter import ttk, Listbox, Scrollbar, END, Y
 from io import BytesIO
 import qrcode
+from zmq import NULL
 
 def generate_google_maps_link(start_location, end_location):
     base_url = "https://www.google.com/maps/dir/"
@@ -17,7 +18,7 @@ def generate_google_maps_link(start_location, end_location):
     link = f"{base_url}{start_location}/{end_location}{walking_mode}"
     return link
 
-def generate_qr_code(link, output_file="qr_code.png"):
+def generate_qr_code(link):
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -28,14 +29,18 @@ def generate_qr_code(link, output_file="qr_code.png"):
     qr.make(fit=True)
 
     img = qr.make_image(fill_color="black", back_color="white")
-    img.save(output_file)
 
-if __name__ == "__main__":
-    start_location = "Rutgers+University+Busch+Student+Center"
-    end_location = "Richard+Weeks+Hall+of+Engineering"
+    # Create an in-memory stream
+    img_stream = BytesIO()
+    img.save(img_stream)
 
-    google_maps_link = generate_google_maps_link(start_location, end_location)
-    generate_qr_code(google_maps_link)
+    # Rewind the stream to the beginning
+    img_stream.seek(0)
+
+    # Use PIL's ImageTk to create an Image object from the in-memory stream
+    qr_image = Image.open(img_stream)
+
+    return qr_image
 
 class CustomTkinterMapView(TkinterMapView):
     def mouse_move(self, event):
@@ -91,34 +96,30 @@ def find_midpoint(lat1, lon1, lat2, lon2):
     return mid_lat, mid_lon
 
 def generate_path(marker_start, marker_end, map_widget):
-    if(marker_start.data == "NULL" or marker_end.data == "NULL"):
+    if marker_start.data == "NULL" or marker_end.data == "NULL":
         map_widget.delete_all_path()
-        if(marker_start.data == "NULL" and marker_end.data == "NULL"):
+        if marker_start.data == "NULL" and marker_end.data == "NULL":
             map_widget.set_position(40.52346671364952, -74.45821773128102)
-        elif(not marker_start.data == "NULL"):
+        elif not marker_start.data == "NULL":
             map_widget.set_position(location_coordinates[marker_start.data][0], location_coordinates[marker_start.data][1])
         else:
             map_widget.set_position(location_coordinates[marker_end.data][0], location_coordinates[marker_end.data][1])
     else:
         csv_file_path = f"mapPaths/{marker_start.data}to{marker_end.data}.csv"
-        if(not os.path.isfile(csv_file_path)):
+        if not os.path.isfile(csv_file_path):
             csv_file_path = f"mapPaths/{marker_end.data}to{marker_start.data}.csv"
-            if(not os.path.isfile(csv_file_path)):
+            if not os.path.isfile(csv_file_path):
                 map_widget.delete_all_path()
                 x, y = find_midpoint(location_coordinates[marker_start.data][0], location_coordinates[marker_start.data][1], location_coordinates[marker_end.data][0], location_coordinates[marker_end.data][1])
                 map_widget.set_position(x, y)
                 return
         with open(csv_file_path, 'r') as file:
             csv_reader = csv.reader(file)
-            # Initialize a list to store the coordinates
             coordinates = []
-            # Iterate through each row in the CSV file
             for row in csv_reader:
-                # Check if both latitude and longitude are present and convert to float
                 if len(row) >= 2 and row[0].strip() and row[1].strip():
                     try:
                         latitude, longitude = map(float, (row[0].strip(), row[1].strip()))
-                        # Append the coordinates tuple to the list
                         coordinates.append((latitude, longitude))
                     except ValueError as e:
                         print(f"Skipping invalid row: {row}. Error: {e}")
@@ -128,10 +129,11 @@ def generate_path(marker_start, marker_end, map_widget):
         if coordinates:
             mid_latitude = sum(coord[0] for coord in coordinates) / len(coordinates)
             mid_longitude = sum(coord[1] for coord in coordinates) / len(coordinates)
-            # Set the map position to the middle of the path
             map_widget.set_position(mid_latitude, mid_longitude)
 
-def on_select(marker, event, other_dropdown, other_marker, map_widget):
+
+
+def on_select(marker, event, other_dropdown, other_marker, map_widget, qr_frame):
     selected_index = event.widget.curselection()
     
     if not selected_index:  # Check if the selection is not empty
@@ -148,28 +150,30 @@ def on_select(marker, event, other_dropdown, other_marker, map_widget):
         other_dropdown.select_clear(0, 'end')
         other_marker.set_position(0, 0)
         other_marker.data = "NULL"
-
-    generate_path(marker, other_marker, map_widget)
-def on_select(marker, event, other_listbox, other_marker, map_widget):
-    selected_index = event.widget.curselection()
     
-    if not selected_index:
-        marker.set_position(0, 0)
-        marker.data = "NULL"
-    else:
-        selected_location = event.widget.get(selected_index)
-        marker.set_position(location_coordinates[selected_location][0], location_coordinates[selected_location][1])
-        marker.set_text(selected_location)
-        marker.data = selected_location
-
-    other_listbox_value = other_listbox.curselection()
-    if other_listbox_value == selected_index:
-        other_listbox.select_clear(0, 'end')
-        other_marker.set_position(0, 0)
-        other_marker.data = "NULL"
-
     generate_path(marker, other_marker, map_widget)
-
+    
+    # Generate QR Code
+    start_location = NULL
+    end_location = NULL
+    if marker.data != "NULL":
+        start_location = location_names[marker.data]
+    if other_marker.data != "NULL":    
+        end_location = location_names[other_marker.data]
+    if start_location != NULL and end_location != NULL:
+        google_maps_link = generate_google_maps_link(start_location, end_location)
+        qr_image = generate_qr_code(google_maps_link)
+        qr_image = qr_image.resize((150, 150))
+        qr_photo = ImageTk.PhotoImage(qr_image)
+        
+        for widget in qr_frame.winfo_children():
+            widget.destroy()
+        qr_title_label = ttk.Label(qr_frame, text="Want Directions?")
+        qr_title_label.grid(row=0, column=0, padx=5, pady=5)
+        qr_label = ttk.Label(qr_frame, image=qr_photo)
+        qr_label.image = qr_photo
+        qr_label.grid(row=1, column=0, padx=5, pady=5)
+    
 def on_listbox_motion(event, listbox, start_y):
     yview = listbox.yview()
     scroll_fraction = 0.01  # Adjust this value to control the scroll speed
@@ -291,7 +295,11 @@ class MapPage(tk.Frame):
                         print(f"Skipping invalid row: {row}. Error: {e}")
 
         path_1 = None
+        qr_frame = tk.Frame(left_frame)
+        qr_frame.grid(row=4, column=0, padx=5, pady=5, sticky="w")
 
+        qr_title_label = ttk.Label(qr_frame, text="Want Directions?")
+        qr_title_label.grid(row=0, column=0, padx=5, pady=5)
         label_start = ttk.Label(left_frame, text="Starting Location")
         label_start.grid(row=0, column=0, padx=5, pady=5)
 
@@ -304,7 +312,7 @@ class MapPage(tk.Frame):
         scrollbar_start.grid(row=1, column=1, sticky="ns")
         listbox_start.configure(yscrollcommand=scrollbar_start.set)
 
-        listbox_start.bind("<<ListboxSelect>>", lambda event: on_select(marker_start, event, listbox_end, marker_end, map_widget))
+        listbox_start.bind("<<ListboxSelect>>", lambda event: on_select(marker_start, event, listbox_end, marker_end, map_widget,qr_frame))
         listbox_start.bind("<B1-Motion>", lambda event: on_listbox_motion(event, listbox_start, event.y))
         listbox_start.bind("<ButtonPress-1>", lambda event: on_listbox_press(event, listbox_start))
         listbox_start.bind("<ButtonRelease-1>", lambda event: on_listbox_release(event, listbox_start, event.y))
@@ -324,7 +332,7 @@ class MapPage(tk.Frame):
         scrollbar_end.grid(row=3, column=1, sticky="ns")
         listbox_end.configure(yscrollcommand=scrollbar_end.set)
 
-        listbox_end.bind("<<ListboxSelect>>", lambda event: on_select(marker_end, event, listbox_start, marker_start, map_widget))
+        listbox_end.bind("<<ListboxSelect>>", lambda event: on_select(marker_end, event, listbox_start, marker_start, map_widget, qr_frame))
         listbox_end.bind("<B1-Motion>", lambda event: on_listbox_motion(event, listbox_end, event.y))
         listbox_end.bind("<ButtonPress-1>", lambda event: on_listbox_press(event, listbox_end))
         listbox_end.bind("<ButtonRelease-1>", lambda event: on_listbox_release(event, listbox_end, event.y))
@@ -333,34 +341,6 @@ class MapPage(tk.Frame):
         map_widget.set_position(40.52346671364952, -74.45821773128102)
         map_widget.set_zoom(15)
         map_widget.max_zoom = 15
-        qr_frame = tk.Frame(left_frame)
-        qr_frame.grid(row=4, column=0, padx=5, pady=5, sticky="w")
-
-        qr_title_label = ttk.Label(qr_frame, text="Want Directions")
-        qr_title_label.grid(row=0, column=0, padx=5, pady=5)
-
-        # QR Code generation
-        def generate_qr():
-            start_location = listbox_start.get(tk.ACTIVE)
-            end_location = listbox_end.get(tk.ACTIVE)
-
-            if start_location and end_location:
-                google_maps_link = generate_google_maps_link(location_names[start_location], location_names[end_location])
-                generate_qr_code(google_maps_link, "qr_code.png")
-                qr_image = Image.open("qr_code.png")
-                qr_image = qr_image.resize((100, 100))
-                qr_photo = ImageTk.PhotoImage(qr_image)
-
-                qr_label = ttk.Label(qr_frame, image=qr_photo)
-                qr_label.image = qr_photo
-                qr_label.grid(row=1, column=0, padx=5, pady=5)
-
-            else:
-                for widget in qr_frame.winfo_children():
-                    widget.destroy()
-
-        generate_qr_button = ttk.Button(qr_frame, text="Generate QR Code", command=generate_qr)
-        generate_qr_button.grid(row=2, column=0, padx=5, pady=5)
 
 class SearchPage(tk.Frame):
     def __init__(self, master):
