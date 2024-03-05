@@ -482,7 +482,7 @@ class LostAndFoundPage(tk.Frame):
 
         conn2 = sqlite3.connect('L&F_Rut_DB.db')
         cursor2 = conn2.cursor()
-        cursor2.execute("SELECT Items, Description FROM Lost_And_Found_DB")
+        cursor2.execute("SELECT Items, Description, Image FROM Lost_And_Found_DB")
         itemsSel = cursor2.fetchall()
         conn2.close()
 
