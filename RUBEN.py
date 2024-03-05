@@ -9,6 +9,33 @@ from PIL import Image, ImageTk
 from fuzzywuzzy import process
 from tkinter import ttk, Listbox, Scrollbar, END, Y
 from io import BytesIO
+import qrcode
+
+def generate_google_maps_link(start_location, end_location):
+    base_url = "https://www.google.com/maps/dir/"
+    walking_mode = "/data=!4m2!4m1!3e2"
+    link = f"{base_url}{start_location}/{end_location}{walking_mode}"
+    return link
+
+def generate_qr_code(link, output_file="qr_code.png"):
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(link)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    img.save(output_file)
+
+if __name__ == "__main__":
+    start_location = "Rutgers+University+Busch+Student+Center"
+    end_location = "Richard+Weeks+Hall+of+Engineering"
+
+    google_maps_link = generate_google_maps_link(start_location, end_location)
+    generate_qr_code(google_maps_link)
 
 class CustomTkinterMapView(TkinterMapView):
     def mouse_move(self, event):
@@ -40,7 +67,21 @@ location_coordinates = {
     "SRN" : (40.52301253291932, -74.4647242045775), 
     "CABM" : (40.52425101367686, -74.46993589110723)
 }
-
+location_names = {
+    "BSC": "Rutgers+University+Busch+Student+Center",
+    "LSC": "Livingston+Student+Center",
+    "ARC": "Allison+Road+Classroom",
+    "RWH": "Richard+Weeks+Hall+of+Engineering",
+    "SEC": "Science+and+Engineering+Resource+Center",
+    "HILL": "Hill+Center+for+Mathematical+Sciences",
+    "EE": "Rutgers+University+Department+of+Electrical+and+Computer+Engineering",
+    "COR": "Rutgers+CoRE+Building",
+    "CCB": "Rutgers+-+Department+of+Chemical+&+Biochemical+Engineering",
+    "PHY-LH": "Physics+Lecture+Hall",
+    "BME": "Department+of+Biomedical+Engineering",
+    "SRN" : "Department+of+Physics+&+Astronomy", 
+    "CABM" : "Center+for+Advanced+Biotechnology+&+Medicine"
+}
 def button_click(button_number):
     print(f"Button {button_number} clicked!")
 
@@ -292,6 +333,34 @@ class MapPage(tk.Frame):
         map_widget.set_position(40.52346671364952, -74.45821773128102)
         map_widget.set_zoom(15)
         map_widget.max_zoom = 15
+        qr_frame = tk.Frame(left_frame)
+        qr_frame.grid(row=4, column=0, padx=5, pady=5, sticky="w")
+
+        qr_title_label = ttk.Label(qr_frame, text="Want Directions")
+        qr_title_label.grid(row=0, column=0, padx=5, pady=5)
+
+        # QR Code generation
+        def generate_qr():
+            start_location = listbox_start.get(tk.ACTIVE)
+            end_location = listbox_end.get(tk.ACTIVE)
+
+            if start_location and end_location:
+                google_maps_link = generate_google_maps_link(location_names[start_location], location_names[end_location])
+                generate_qr_code(google_maps_link, "qr_code.png")
+                qr_image = Image.open("qr_code.png")
+                qr_image = qr_image.resize((100, 100), Image.ANTIALIAS)
+                qr_photo = ImageTk.PhotoImage(qr_image)
+
+                qr_label = ttk.Label(qr_frame, image=qr_photo)
+                qr_label.image = qr_photo
+                qr_label.grid(row=1, column=0, padx=5, pady=5)
+
+            else:
+                for widget in qr_frame.winfo_children():
+                    widget.destroy()
+
+        generate_qr_button = ttk.Button(qr_frame, text="Generate QR Code", command=generate_qr)
+        generate_qr_button.grid(row=2, column=0, padx=5, pady=5)
 
 class SearchPage(tk.Frame):
     def __init__(self, master):
