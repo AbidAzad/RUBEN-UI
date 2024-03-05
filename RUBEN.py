@@ -7,7 +7,7 @@ import os
 import sqlite3
 from PIL import Image, ImageTk
 from fuzzywuzzy import process
-from tkinter import ttk, Listbox, END
+from tkinter import ttk, Listbox, Scrollbar, END, Y
 
 class CustomTkinterMapView(TkinterMapView):
     def mouse_move(self, event):
@@ -222,10 +222,15 @@ class MapPage(tk.Frame):
         for location in [""] + list(location_coordinates.keys()):
             listbox_start.insert(END, location)
 
+        listbox_start_scrollbar = Scrollbar(left_frame, command=listbox_start.yview)
+        listbox_start_scrollbar.grid(row=1, column=1, sticky='ns')
+        listbox_start.configure(yscrollcommand=listbox_start_scrollbar.set)
+
         listbox_start.bind("<<ListboxSelect>>", lambda event: on_select(marker_start, event, listbox_end, marker_end, map_widget))
-        listbox_start.select_set(0)  # Select the default value
+        listbox_start.select_set(0)
         listbox_start.activate(0)
 
+        # Repeat the process for the destination listbox
         label_end = ttk.Label(left_frame, text="Destination")
         label_end.grid(row=2, column=0, padx=5, pady=5)
 
@@ -234,9 +239,14 @@ class MapPage(tk.Frame):
         for location in [""] + list(location_coordinates.keys()):
             listbox_end.insert(END, location)
 
+        listbox_end_scrollbar = Scrollbar(left_frame, command=listbox_end.yview)
+        listbox_end_scrollbar.grid(row=3, column=1, sticky='ns')
+        listbox_end.configure(yscrollcommand=listbox_end_scrollbar.set)
+
         listbox_end.bind("<<ListboxSelect>>", lambda event: on_select(marker_end, event, listbox_start, marker_start, map_widget))
-        listbox_end.select_set(0)  # Select the default value
+        listbox_end.select_set(0)
         listbox_end.activate(0)
+        
         map_widget.set_position(40.52346671364952, -74.45821773128102)
         map_widget.set_zoom(15)
         map_widget.max_zoom = 15
