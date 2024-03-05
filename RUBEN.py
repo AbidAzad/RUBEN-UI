@@ -348,7 +348,7 @@ class MapPage(tk.Frame):
                 google_maps_link = generate_google_maps_link(location_names[start_location], location_names[end_location])
                 generate_qr_code(google_maps_link, "qr_code.png")
                 qr_image = Image.open("qr_code.png")
-                qr_image = qr_image.resize((100, 100), Image.ANTIALIAS)
+                qr_image = qr_image.resize((100, 100))
                 qr_photo = ImageTk.PhotoImage(qr_image)
 
                 qr_label = ttk.Label(qr_frame, image=qr_photo)
