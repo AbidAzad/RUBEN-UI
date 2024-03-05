@@ -8,6 +8,7 @@ import sqlite3
 from PIL import Image, ImageTk
 from fuzzywuzzy import process
 from tkinter import ttk, Listbox, Scrollbar, END, Y
+from io import BytesIO
 
 class CustomTkinterMapView(TkinterMapView):
     def mouse_move(self, event):
@@ -546,15 +547,26 @@ class LostAndFoundPage(tk.Frame):
 
         conn2 = sqlite3.connect('L&F_Rut_DB.db')
         cursor2 = conn2.cursor()
-        cursor2.execute("SELECT Items, Description, Image FROM Lost_And_Found_DB")
+        cursor2.execute("SELECT Items, Description, Item_Image FROM Lost_And_Found_DB")
+
         itemsSel = cursor2.fetchall()
         conn2.close()
 
         for itemView in itemsSel:
-            Items, Description = itemView
+            Items, Description, Item_Image = itemView
             button_text = f"{Items} - {Description}"
+
+            imageItem = Image.open(BytesIO(Item_Image))
+            imageItem.thumbnail((200,200))
+
+            imgtk = ImageTk.PhotoImage(imageItem)
+
             button = tk.Button(self, text=button_text)
             button.pack(pady=10)
+
+            image_label = tk.Label(self, image=imgtk)
+            image_label.image = imgtk  # Keep a reference to avoid garbage collection
+            image_label.pack(pady=5, side=tk.TOP)
 
 
 
