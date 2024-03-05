@@ -330,10 +330,10 @@ class FAQPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
         script_directory = os.path.dirname(os.path.abspath(__file__))
-        image_path = os.path.join(script_directory, "icons\FAQBackground.jpeg")
+        image_path = os.path.join(script_directory, "icons/FAQBackground.jpeg")
         # Load the image file using PhotoImage
         image = Image.open(image_path)
-        resized_image = image.resize((1450, 700), Image.ANTIALIAS)
+        resized_image = image.resize((1450, 700), Image.LANCZOS)
 
         photo = ImageTk.PhotoImage(resized_image)
 
