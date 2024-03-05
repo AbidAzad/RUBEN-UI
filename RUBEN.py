@@ -195,6 +195,7 @@ class SampleApp(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
         self.title("RUBEN")
+        self.state('zoomed')
         self.geometry("1280x800")  
         self._frame = None
         self.switch_frame(StartPage)
