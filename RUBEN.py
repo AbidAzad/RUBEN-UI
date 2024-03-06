@@ -347,6 +347,7 @@ class SearchPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
 
+        # Sample QA data
         sample_qa_data = {
             "What is the largest mammal on Earth?": "The blue whale is the largest mammal on Earth.",
             "How many continents are there?": "There are seven continents: Africa, Antarctica, Asia, Europe, North America, Australia (Oceania), and South America.",
@@ -360,37 +361,113 @@ class SearchPage(tk.Frame):
             "What is the meaning of life, the universe, and everything?": "According to Douglas Adams' 'The Hitchhiker's Guide to the Galaxy,' the answer is 42.",
         }
 
+        # Header frame
         header_frame = tk.Frame(self, bg="#990000", height=80)
         header_frame.pack(fill="x")
 
+        # Back button
         back_button = tk.Button(header_frame, text="Back", command=lambda: master.switch_frame(StartPage),
                                 bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
         back_button.pack(side="left", padx=20)
 
+        # Header label
         header_label = tk.Label(header_frame, text="What do you want to Know?", bg="#990000", fg="white",
                                 font=("Arial", 24, "bold"), pady=20)
         header_label.pack()
 
-        search_frame = tk.Frame(self, bg="#CCCCCC", width=200) 
+        # Search frame
+        search_frame = tk.Frame(self, bg="#CCCCCC", width=200)
         search_frame.pack(side="left", fill="y")
 
+        # Search label
         search_label = tk.Label(search_frame, text="Search:", bg="#CCCCCC", font=("Arial", 16, "bold"), pady=10)
         search_label.pack()
 
-        search_entry = tk.Entry(search_frame, font=("Arial", 14))
-        search_entry.pack(pady=10)
+        # Search entry
+        self.search_entry = tk.Entry(search_frame, font=("Arial", 14))
+        self.search_entry.pack(pady=10)
 
-        search_button = tk.Button(search_frame, text="Search", command=lambda: self.search_question(search_entry.get()),
+        # Search button
+        search_button = tk.Button(search_frame, text="Search", command=lambda: self.search_question(self.search_entry.get()),
                                   bg="#990000", fg="white", font=("Arial", 14, "bold"), padx=10)
         search_button.pack()
 
+        # Keyboard frame
+        self.keyboard_frame = tk.Frame(self, bg="#CCCCCC", height=200)
+        self.keyboard_frame.pack(side="bottom", fill="x")
+        
+        # Question listbox
         self.question_listbox = tk.Listbox(self, selectmode=tk.SINGLE, exportselection=False)
         for question in sample_qa_data.keys():
             self.question_listbox.insert(tk.END, question)
         self.question_listbox.pack(side="left", fill="both", expand=True)
         self.question_listbox.bind("<ButtonRelease-1>", lambda event: self.display_answer(event, sample_qa_data))
 
+        # Answer frame
         self.answer_frame = tk.Frame(self, bg="#CCCCCC", width=500)
+
+
+        # Define the keyboard buttons
+        keyboard_buttons = [
+            "1234567890",
+            "qwertyuiop",
+            "asdfghjkl",
+            "zxcvbnm",
+            {"label": "Shift", "command": self.toggle_shift},
+            {"label": "Backspace", "command": self.on_backspace_click},
+        ]
+
+        # Create keyboard buttons
+        for row in keyboard_buttons:
+            row_frame = tk.Frame(self.keyboard_frame, bg="#CCCCCC")
+            row_frame.pack(side="top", fill="both", expand=True)
+
+            if isinstance(row, dict):
+                btn = tk.Button(row_frame, text=row["label"], command=row["command"],
+                                bg="#CCCCCC", font=("Arial", 12), padx=5, pady=5)
+                btn.pack(side="left", fill="both", expand=True)
+            else:
+                for button in row:
+                    btn = tk.Button(row_frame, text=button,
+                                    command=lambda b=button: self.on_letter_click(b),
+                                    bg="#CCCCCC", font=("Arial", 12), padx=5, pady=5)
+                    btn.pack(side="left", fill="both", expand=True)
+
+        self.shift_pressed = False
+
+    def on_keyboard_button_click(self, button):
+        if isinstance(button, dict):
+            if button["label"] == "Shift":
+                self.toggle_shift()
+        elif button == "backspace":
+            self.on_backspace_click()
+        else:
+            self.on_letter_click(button)
+    
+    
+    def toggle_shift(self):
+        self.shift_pressed = not self.shift_pressed
+        
+        # Update keyboard buttons text based on shift state
+        for row_frame in self.keyboard_frame.winfo_children():
+            for button in row_frame.winfo_children():
+                if isinstance(button, tk.Button) and button["text"] != "Shift" and button["text"] != "Backspace":
+                    if self.shift_pressed:
+                        button["text"] = button["text"].upper()
+                    else:
+                        button["text"] = button["text"].lower()
+
+    def on_backspace_click(self):
+        current_text = self.search_entry.get()
+        self.search_entry.delete(len(current_text) - 1, tk.END)
+
+    def on_letter_click(self, letter):
+        current_text = self.search_entry.get()
+        if self.shift_pressed:
+            letter = letter.upper()
+            self.toggle_shift()
+
+        self.search_entry.insert(tk.END, letter)
 
     def search_question(self, query):
         self.question_listbox.delete(0, tk.END)
