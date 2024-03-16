@@ -680,6 +680,11 @@ class LostAndFoundPage(tk.Frame):
                                 font=("Arial", 24, "bold"), pady=20)
         header_label.pack()
 
+        self.pair_frames = []  # Store references to pair frames
+
+        self.load_items()
+
+    def load_items(self):
         conn2 = sqlite3.connect('L&F_Rut_DB.db')
         cursor2 = conn2.cursor()
         cursor2.execute("SELECT Items, Description, Item_Image FROM Lost_And_Found_DB")
@@ -688,35 +693,44 @@ class LostAndFoundPage(tk.Frame):
         conn2.close()
 
         # Organize items into pairs
-        pairs = [(itemsSel[i], itemsSel[i + 1]) for i in range(0, len(itemsSel), 2)]
+        pairs = []
+        for i in range(0, len(itemsSel), 2):
+            if i + 1 < len(itemsSel):
+                pairs.append((itemsSel[i], itemsSel[i + 1]))
+            else:
+                pairs.append((itemsSel[i], None))
 
         for pair_index, (item1, item2) in enumerate(pairs):
-            pair_frame = tk.Frame(self)  # Create a frame for each pair
-            pair_frame.pack()
+            if pair_index < len(self.pair_frames):
+                pair_frame = self.pair_frames[pair_index]
+            else:
+                pair_frame = tk.Frame(self)  # Create a frame for each pair
+                pair_frame.pack()
+                self.pair_frames.append(pair_frame)
 
             for item_index, item in enumerate((item1, item2)):
-                Items, Description, Item_Image = item
-                button_text = f"{Items} - {Description}"
+                if item:
+                    Items, Description, Item_Image = item
+                    button_text = f"{Items}" # - {Description}"
 
-                imageItem = Image.open(BytesIO(Item_Image))
-                imageItem.thumbnail((200, 200))
-                imgtk = ImageTk.PhotoImage(imageItem)
+                    imageItem = Image.open(BytesIO(Item_Image))
+                    imageItem.thumbnail((200, 200))
+                    imgtk = ImageTk.PhotoImage(imageItem)
 
-                button = tk.Button(pair_frame, text=button_text)
-                image_label = tk.Label(pair_frame, image=imgtk)
+                    button = tk.Button(pair_frame, text=button_text)
+                    image_label = tk.Label(pair_frame, image=imgtk)
 
-                button.grid(row=0, column=item_index, padx=10, pady=10)
-                image_label.grid(row=1, column=item_index, padx=10, pady=10)
+                    button.grid(row=0, column=item_index, padx=10, pady=10)
+                    image_label.grid(row=1, column=item_index, padx=10, pady=10)
 
-                # Keep a reference to avoid garbage collection
-                image_label.image = imgtk
+                    # Keep a reference to avoid garbage collection
+                    image_label.image = imgtk
 
-                # Save reference to imgtk to prevent garbage collection
-                button.imgtk = imgtk
+                    # Save reference to imgtk to prevent garbage collection
+                    button.imgtk = imgtk
 
-                # Bind a function to the button to prevent garbage collection
-                button.config(command=lambda x=imgtk: self.display_item(x))
-
+                    # Bind a function to the button to prevent garbage collection
+                    button.config(command=lambda x=imgtk: self.display_item(x))
 
 
 if __name__ == "__main__":
