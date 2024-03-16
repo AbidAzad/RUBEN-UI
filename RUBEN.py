@@ -714,7 +714,7 @@ class LostAndFoundPage(tk.Frame):
                     button_text = f"{Items}" # - {Description}"
 
                     imageItem = Image.open(BytesIO(Item_Image))
-                    imageItem.thumbnail((200, 200))
+                    imageItem.thumbnail((400, 400))
                     imgtk = ImageTk.PhotoImage(imageItem)
 
                     button = tk.Button(pair_frame, text=button_text)
