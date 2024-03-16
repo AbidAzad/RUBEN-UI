@@ -679,7 +679,6 @@ class LostAndFoundPage(tk.Frame):
         header_label = tk.Label(header_frame, text="Lost and Found", bg="#990000", fg="white",
                                 font=("Arial", 24, "bold"), pady=20)
         header_label.pack()
-        #FINISH THE REMAINDER OF THE PAGE 
 
         conn2 = sqlite3.connect('L&F_Rut_DB.db')
         cursor2 = conn2.cursor()
@@ -688,21 +687,35 @@ class LostAndFoundPage(tk.Frame):
         itemsSel = cursor2.fetchall()
         conn2.close()
 
-        for itemView in itemsSel:
-            Items, Description, Item_Image = itemView
-            button_text = f"{Items} - {Description}"
+        # Organize items into pairs
+        pairs = [(itemsSel[i], itemsSel[i + 1]) for i in range(0, len(itemsSel), 2)]
 
-            imageItem = Image.open(BytesIO(Item_Image))
-            imageItem.thumbnail((200,200))
+        for pair_index, (item1, item2) in enumerate(pairs):
+            pair_frame = tk.Frame(self)  # Create a frame for each pair
+            pair_frame.pack()
 
-            imgtk = ImageTk.PhotoImage(imageItem)
+            for item_index, item in enumerate((item1, item2)):
+                Items, Description, Item_Image = item
+                button_text = f"{Items} - {Description}"
 
-            button = tk.Button(self, text=button_text)
-            button.pack(pady=10)
+                imageItem = Image.open(BytesIO(Item_Image))
+                imageItem.thumbnail((200, 200))
+                imgtk = ImageTk.PhotoImage(imageItem)
 
-            image_label = tk.Label(self, image=imgtk)
-            image_label.image = imgtk  # Keep a reference to avoid garbage collection
-            image_label.pack(pady=5, side=tk.TOP)
+                button = tk.Button(pair_frame, text=button_text)
+                image_label = tk.Label(pair_frame, image=imgtk)
+
+                button.grid(row=0, column=item_index, padx=10, pady=10)
+                image_label.grid(row=1, column=item_index, padx=10, pady=10)
+
+                # Keep a reference to avoid garbage collection
+                image_label.image = imgtk
+
+                # Save reference to imgtk to prevent garbage collection
+                button.imgtk = imgtk
+
+                # Bind a function to the button to prevent garbage collection
+                button.config(command=lambda x=imgtk: self.display_item(x))
 
 
 
