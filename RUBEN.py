@@ -481,16 +481,24 @@ class SearchPage(tk.Frame):
     def search_question(self, query):
         self.question_listbox.delete(0, tk.END)
         sample_qa_data = {
-            "What is the largest mammal on Earth?": "The blue whale is the largest mammal on Earth.",
-            "How many continents are there?": "There are seven continents: Africa, Antarctica, Asia, Europe, North America, Australia (Oceania), and South America.",
-            "Who wrote 'Romeo and Juliet'?": "William Shakespeare wrote 'Romeo and Juliet'.",
-            "What is the capital of Japan?": "The capital of Japan is Tokyo.",
-            "What is the boiling point of water in Celsius?": "The boiling point of water in Celsius is 100 degrees.",
-            "Who discovered penicillin?": "Alexander Fleming discovered penicillin.",
-            "What is the currency of Brazil?": "The currency of Brazil is the Brazilian Real (BRL).",
-            "What is the speed of light?": "The speed of light in a vacuum is approximately 299,792 kilometers per second.",
-            "Who painted the Mona Lisa?": "Leonardo da Vinci painted the Mona Lisa.",
-            "What is the meaning of life, the universe, and everything?": "According to Douglas Adams' 'The Hitchhiker's Guide to the Galaxy,' the answer is 42.",
+            "What's the Wi-Fi password for the student center?": "Join RU-Wireless Secure if you are an enrolled student at Rutgers University, if you are a guest, use the guest sign-in when connecting to RU-Wireless.",
+            "Can you provide information about internship or job opportunities for students?": "The Office of Career and Exploration will assist you.",
+            "Where can I find information about student clubs and organizations?": "The help desk will assist with this matter. You can find the help desk on the map.",
+            "What's the menu like at the campus cafeteria today?": "Go to http://food.rutgers.edu, click Busch Dining Hall, and you will find the menu there.",
+            "Can you assist me in locating a quiet study space?": "The student help desk will assist you in finding a quiet space. You can also find the location of the quiet study space on the map.",
+            "How do I access resources like textbooks or academic materials?": "The Barnes & Noble on College Ave will assist you. Go to https://rutgers.bncollege.com for directions and details.",
+            "Can you recommend local coffee shops or places to study off-campus?": "There is a Panera in the Busch Student Center.",
+            "What are the hours of operation for the library or other campus facilities?": "Go to https://www.libraries.rutgers.edu/visit-study/library-hours to see specific library hours.",
+            "Is there a lost and found service on campus, and how can I contact them?": "Do not worry, R.U.B.E.N is connected to the lost and found database. Click out of the FAQ page and click on the lost and found button for more details.",
+            "Can you help me understand the public transportation options around the campus?": "Visit https://ipo.rutgers.edu/dots/buses-nb for specific stops as the information provided above is a general explanation of the bus routes.",
+            "Where can I print documents or find computer labs for assignments?": "Near the help desk is a set of 3 computers. Students and Faculty are free to log in and print documents at their free will.",
+            "How can I get involved in community service or volunteer work on campus?": "Visit https://community.rutgers.edu/programs-services/program-directory/community-service-student-opportunities for more details!",
+            "What's the quickest way to get to the gym from here?": "R.U.B.E.N would like to walk you to the gym, but he can only walk in the student center. A 5 min walk will take you to the Werblin Recreation Center. GET THOSE STEPS IN!!!!",
+            "Can you suggest resources for mental health and wellness on campus?": "Although R.U.B.E.N is a programmable robot, he believes in the importance of mental health. Visit https://health.rutgers.edu/medical-and-counseling-services/counseling-services.",
+            "Where can I purchase or rent textbooks for my classes?": "The Barnes and Noble on College Ave will assist you. Visit https://rutgers.bncollege.com.",
+            "Do you have information on tutoring services or study groups?": "The student learning center on Busch holds walk-in tutoring sessions for students of all years.",
+            "How can I report a maintenance issue in the student center?": "The student help desk will assist you.",
+            "Can you provide details on campus security and emergency procedures?": "Visit https://newbrunswick.rutgers.edu/student-experience/campus-safety for more details."
         }
         matched_questions = process.extractBests(query, sample_qa_data.keys(), score_cutoff=80)
         matched_questions = sorted(matched_questions, key=lambda x: x[1], reverse=True)
