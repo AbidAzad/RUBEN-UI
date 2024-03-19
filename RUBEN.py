@@ -588,14 +588,14 @@ class EventsPage(tk.Frame):
         # Fetch events from the database and create buttons for each event
         conn = sqlite3.connect('data2.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT event_name, event_location FROM Event_Data")
+        cursor.execute("SELECT event_name, event_latitude, event_longitude FROM Event_Data")
         events = cursor.fetchall()
         conn.close()
 
         for event in events:
-            event_name, event_location = event
-            button_text = f"{event_name} - {event_location}"
-            button = tk.Button(self, text=button_text, command=lambda loc=event_location: self.display_map(loc))
+            event_name, event_latitude, event_longitude = event
+            button_text = f"{event_name}"
+            button = tk.Button(self, text=button_text, command=lambda loc=[event_latitude, event_longitude]: self.display_map(loc))
             button.pack(pady=10)
 
     def display_map(self, location):
@@ -606,9 +606,8 @@ class EventsPage(tk.Frame):
         gmap_widget.pack(fill="both", expand=True)
 
         gmap_widget.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
-
-        mrkr = gmap_widget.set_address(location, marker=True)
-        mrkr.set_text("Here")
+        gmap_widget.set_position(location[0],location[1])
+        gmap_widget.set_marker(location[0],location[1], text = "Here I Am!")
         gmap_widget.set_zoom(17)
 
 class EmergencyPage(tk.Frame):
@@ -722,7 +721,7 @@ class LostAndFoundPage(tk.Frame):
                     button_text = f"{Items}" # - {Description}"
 
                     imageItem = Image.open(BytesIO(Item_Image))
-                    imageItem.thumbnail((250, 250))
+                    imageItem.thumbnail((400, 400))
                     imgtk = ImageTk.PhotoImage(imageItem)
 
                     button = tk.Button(pair_frame, text=button_text)
