@@ -330,20 +330,19 @@ class FAQPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
         script_directory = os.path.dirname(os.path.abspath(__file__))
-        image_path = os.path.join(script_directory, "icons\FAQBackground.jpeg")
-        # Load the image file using PhotoImage
+        image_path = os.path.join(script_directory, "icons", "FAQBackground.jpeg")        
         image = Image.open(image_path)
-        resized_image = image.resize((1450, 700), Image.ANTIALIAS)
+        resized_image = image.resize((1450, 700))
 
         photo = ImageTk.PhotoImage(resized_image)
 
         # Create the label with the PhotoImage object
         bg_image = tk.Label(self, image=photo, text="Frequently Asked Questions:\n\n"
                                                     "1. RUBEN, what does your name stand for?\n"
-                                                    "My name stands for Remote Utility Bot for Education and Navigation</i>\n\n"
+                                                    "My name stands for Remote Utility Bot for Education and Navigation\n\n"
                                                     "2. What is your mission?\n"
-                                                    "Welcome! My mission is to help mitigate the complexity students \nmay deal with when first entering the university. I will provide clear directions to specific locations.\n\n"
-                                                    "3. Who created you? \n"
+                                                    "Welcome! My mission is to help mitigate the complexity students may deal with when first entering the university. I will provide clear directions to specific locations.\n\n"
+                                                    "3. Who created you?\n"
                                                     "Jeff Acevedo, Abid Azad, Carina Manek, Samuel Fabian, and Sampat Pachade for their senior design project",
                             padx=20, pady=20, compound="center", fg="pink", font=("Helvetica", 20, "bold"), justify="left", wraplength=600)
         bg_image.image = photo  # To prevent garbage collection
@@ -401,10 +400,13 @@ class EventsPage(tk.Frame):
         mrkr = gmap_widget.set_address(location, marker=True)
         mrkr.set_text("Here")
         gmap_widget.set_zoom(17)
-        
+
 class EmergencyPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
+
+        self.configure(bg="#f0f0f0")
+
         header_frame = tk.Frame(self, bg="#990000", height=80)
         header_frame.pack(fill="x")
 
@@ -415,7 +417,53 @@ class EmergencyPage(tk.Frame):
         header_label = tk.Label(header_frame, text="Emergency Contacts", bg="#990000", fg="white",
                                 font=("Arial", 24, "bold"), pady=20)
         header_label.pack()
-        #FINISH THE REMAINDER OF THE PAGE 
+        #FINISH THE REMAINDER OF THE PAGE
+
+        disclaimer_label = tk.Label(self, text="DISCLAIMER: In case of emergency, call 911", font=("Arial", 14, "bold"),
+                                    fg="#990000", bg="#f0f0f0")
+        disclaimer_label.pack(pady=(20, 5), padx=20, anchor="center")
+
+        # Rutgers University Police Department
+        rutgers_police_label = tk.Label(self, text="Rutgers University Police Department", font=("Arial", 14, "bold"),
+                                        fg="#990000", bg="#f0f0f0")
+        rutgers_police_label.pack(anchor="center", padx=20, pady=(10, 5))
+
+        rutgers_address_label = tk.Label(self, text="Address: 55 Commercial Ave, New Brunswick, NJ 08901",
+                                         font=("Arial", 12), bg="#f0f0f0")
+        rutgers_address_label.pack(anchor="center", padx=20)
+
+        rutgers_phone_label = tk.Label(self, text="Phone: 732-932-7211", font=("Arial", 12), bg="#f0f0f0")
+        rutgers_phone_label.pack(anchor="center", padx=20)
+
+        # Office of Information Technology Help Desk
+        oit_label = tk.Label(self, text="Office of Information Technology Help Desk", font=("Arial", 14, "bold"),
+                             fg="#990000", bg="#f0f0f0")
+        oit_label.pack(anchor="center", padx=20, pady=(20, 5))
+
+        oit_address_label = tk.Label(self, text="Address: Davidson Hall, 96 Davidson Rd Room 172, Piscataway, NJ 08854",
+                                      font=("Arial", 12), bg="#f0f0f0")
+        oit_address_label.pack(anchor="center", padx=20)
+
+        oit_phone_label = tk.Label(self, text="Phone: 833-648-4357", font=("Arial", 12), bg="#f0f0f0")
+        oit_phone_label.pack(anchor="center", padx=20, pady=(5, 0)) 
+
+        oit_hours_label = tk.Label(self, text="Hours:", font=("Arial", 12), bg="#f0f0f0")
+        oit_hours_label.pack(anchor="center", padx=20, pady=(5, 0))  
+
+        days_hours = [
+            "Monday: 8:30 AM to 8 PM",
+            "Tuesday: 8:30 AM to 8 PM",
+            "Wednesday: 8:30 AM to 8 PM",
+            "Thursday: 8:30 AM to 8 PM",
+            "Friday: 8:30 AM to 5 PM",
+            "Saturday: 12 to 6 PM",
+            "Sunday: 2 to 8 PM"
+        ]
+
+        for day_hours in days_hours:
+            day_label = tk.Label(self, text=day_hours, font=("Arial", 12), bg="#f0f0f0")
+            day_label.pack(anchor="center", padx=(40, 20))
+
 class LostAndFoundPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
