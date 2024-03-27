@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import PhotoImage
+from matplotlib.pyplot import margins
 from tkintermapview import TkinterMapView
 import csv
 import os
@@ -683,15 +684,38 @@ class LostAndFoundPage(tk.Frame):
                                 bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
         back_button.pack(side="left", padx=20)
 
-        header_label = tk.Label(header_frame, text="Lost and Found", bg="#990000", fg="white",
+        header_label = tk.Label(header_frame, text="Found and Lost", bg="#990000", fg="white",
                                 font=("Arial", 24, "bold"), pady=20)
         header_label.pack()
+        # Step 1: Create a frame to serve as a parent for canvas and scrollbar
+        outer_frame = tk.Frame(self)
+        outer_frame.pack(fill="both", expand=True)
 
-        self.pair_frames = []  # Store references to pair frames
+        # Step 2: Add canvas to outer_frame
+        canvas = tk.Canvas(outer_frame)
+        canvas.pack(side="left", fill="both", expand=True)
 
-        self.load_items()
+        # Step 3: Add scrollbar
+        scrollbar = tk.Scrollbar(outer_frame, orient="vertical", command=canvas.yview)
+        scrollbar.pack(side="right", fill="y")
 
-    def load_items(self):
+        # Connect the canvas and scrollbar
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Create a frame inside canvas to contain the items
+        inner_frame = tk.Frame(canvas)
+        canvas.create_window((225, 0), window=inner_frame, anchor="nw")
+
+        # Configure canvas scrolling region
+        inner_frame.bind("<Configure>", lambda event, canvas=canvas: canvas.configure(scrollregion=canvas.bbox("all")))
+
+        # Initialize pair_frames attribute
+        self.pair_frames = []
+
+        # Now add the items to the inner_frame
+        self.load_items(inner_frame)
+
+    def load_items(self, inner_frame):
         conn2 = sqlite3.connect('L&F_Rut_DB.db')
         cursor2 = conn2.cursor()
         cursor2.execute("SELECT Items, Description, Item_Image FROM Lost_And_Found_DB")
@@ -711,8 +735,8 @@ class LostAndFoundPage(tk.Frame):
             if pair_index < len(self.pair_frames):
                 pair_frame = self.pair_frames[pair_index]
             else:
-                pair_frame = tk.Frame(self)  # Create a frame for each pair
-                pair_frame.pack()
+                pair_frame = tk.Frame(inner_frame)  # Create a frame for each pair
+                pair_frame.pack(in_=inner_frame)
                 self.pair_frames.append(pair_frame)
 
             for item_index, item in enumerate((item1, item2)):
@@ -738,6 +762,7 @@ class LostAndFoundPage(tk.Frame):
 
                     # Bind a function to the button to prevent garbage collection
                     button.config(command=lambda x=imgtk: self.display_item(x))
+
 
 
 if __name__ == "__main__":
