@@ -1,12 +1,47 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import PhotoImage
+from matplotlib.pyplot import margins
 from tkintermapview import TkinterMapView
 import csv
 import os
 import sqlite3
 from PIL import Image, ImageTk
 from fuzzywuzzy import process
+from tkinter import ttk, Listbox, Scrollbar, END, Y
+from io import BytesIO
+import qrcode
+from zmq import NULL
+
+def generate_google_maps_link(start_location, end_location):
+    base_url = "https://www.google.com/maps/dir/"
+    walking_mode = "/data=!4m2!4m1!3e2"
+    link = f"{base_url}{start_location}/{end_location}{walking_mode}"
+    return link
+
+def generate_qr_code(link):
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(link)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    # Create an in-memory stream
+    img_stream = BytesIO()
+    img.save(img_stream)
+
+    # Rewind the stream to the beginning
+    img_stream.seek(0)
+
+    # Use PIL's ImageTk to create an Image object from the in-memory stream
+    qr_image = Image.open(img_stream)
+
+    return qr_image
 
 class CustomTkinterMapView(TkinterMapView):
     def mouse_move(self, event):
@@ -38,7 +73,21 @@ location_coordinates = {
     "SRN" : (40.52301253291932, -74.4647242045775), 
     "CABM" : (40.52425101367686, -74.46993589110723)
 }
-
+location_names = {
+    "BSC": "Rutgers+University+Busch+Student+Center",
+    "LSC": "Livingston+Student+Center",
+    "ARC": "Allison+Road+Classroom",
+    "RWH": "Richard+Weeks+Hall+of+Engineering",
+    "SEC": "Science+and+Engineering+Resource+Center",
+    "HILL": "Hill+Center+for+Mathematical+Sciences",
+    "EE": "Rutgers+University+Department+of+Electrical+and+Computer+Engineering",
+    "COR": "Rutgers+CoRE+Building",
+    "CCB": "Rutgers+-+Department+of+Chemical+&+Biochemical+Engineering",
+    "PHY-LH": "Physics+Lecture+Hall",
+    "BME": "Department+of+Biomedical+Engineering",
+    "SRN" : "Department+of+Physics+&+Astronomy", 
+    "CABM" : "Center+for+Advanced+Biotechnology+&+Medicine"
+}
 def button_click(button_number):
     print(f"Button {button_number} clicked!")
 
@@ -48,34 +97,30 @@ def find_midpoint(lat1, lon1, lat2, lon2):
     return mid_lat, mid_lon
 
 def generate_path(marker_start, marker_end, map_widget):
-    if(marker_start.data == "NULL" or marker_end.data == "NULL"):
+    if marker_start.data == "NULL" or marker_end.data == "NULL":
         map_widget.delete_all_path()
-        if(marker_start.data == "NULL" and marker_end.data == "NULL"):
+        if marker_start.data == "NULL" and marker_end.data == "NULL":
             map_widget.set_position(40.52346671364952, -74.45821773128102)
-        elif(not marker_start.data == "NULL"):
+        elif not marker_start.data == "NULL":
             map_widget.set_position(location_coordinates[marker_start.data][0], location_coordinates[marker_start.data][1])
         else:
             map_widget.set_position(location_coordinates[marker_end.data][0], location_coordinates[marker_end.data][1])
     else:
         csv_file_path = f"mapPaths/{marker_start.data}to{marker_end.data}.csv"
-        if(not os.path.isfile(csv_file_path)):
+        if not os.path.isfile(csv_file_path):
             csv_file_path = f"mapPaths/{marker_end.data}to{marker_start.data}.csv"
-            if(not os.path.isfile(csv_file_path)):
+            if not os.path.isfile(csv_file_path):
                 map_widget.delete_all_path()
                 x, y = find_midpoint(location_coordinates[marker_start.data][0], location_coordinates[marker_start.data][1], location_coordinates[marker_end.data][0], location_coordinates[marker_end.data][1])
                 map_widget.set_position(x, y)
                 return
         with open(csv_file_path, 'r') as file:
             csv_reader = csv.reader(file)
-            # Initialize a list to store the coordinates
             coordinates = []
-            # Iterate through each row in the CSV file
             for row in csv_reader:
-                # Check if both latitude and longitude are present and convert to float
                 if len(row) >= 2 and row[0].strip() and row[1].strip():
                     try:
                         latitude, longitude = map(float, (row[0].strip(), row[1].strip()))
-                        # Append the coordinates tuple to the list
                         coordinates.append((latitude, longitude))
                     except ValueError as e:
                         print(f"Skipping invalid row: {row}. Error: {e}")
@@ -85,31 +130,73 @@ def generate_path(marker_start, marker_end, map_widget):
         if coordinates:
             mid_latitude = sum(coord[0] for coord in coordinates) / len(coordinates)
             mid_longitude = sum(coord[1] for coord in coordinates) / len(coordinates)
-            # Set the map position to the middle of the path
             map_widget.set_position(mid_latitude, mid_longitude)
 
-def on_select(marker, event, other_dropdown, other_marker, map_widget):
-    selected_location = event.widget.get()
-    if selected_location == "":
+
+
+def on_select(marker, event, other_dropdown, other_marker, map_widget, qr_frame):
+    selected_index = event.widget.curselection()
+    
+    if not selected_index:  # Check if the selection is not empty
         marker.set_position(0, 0)
         marker.data = "NULL"
     else:
+        selected_location = event.widget.get(selected_index)
         marker.set_position(location_coordinates[selected_location][0], location_coordinates[selected_location][1])
         marker.set_text(selected_location)
         marker.data = selected_location
 
-    other_dropdown_value = other_dropdown.get()
-    if other_dropdown_value == selected_location:
-        other_dropdown.set("")  
+    other_dropdown_value = other_dropdown.curselection()
+    if other_dropdown_value == selected_index:
+        other_dropdown.select_clear(0, 'end')
         other_marker.set_position(0, 0)
         other_marker.data = "NULL"
-
+    
     generate_path(marker, other_marker, map_widget)
+    
+    # Generate QR Code
+    start_location = NULL
+    end_location = NULL
+    if marker.data != "NULL":
+        start_location = location_names[marker.data]
+    if other_marker.data != "NULL":    
+        end_location = location_names[other_marker.data]
+    if start_location != NULL and end_location != NULL:
+        google_maps_link = generate_google_maps_link(start_location, end_location)
+        qr_image = generate_qr_code(google_maps_link)
+        qr_image = qr_image.resize((150, 150))
+        qr_photo = ImageTk.PhotoImage(qr_image)
+        
+        for widget in qr_frame.winfo_children():
+            widget.destroy()
+        qr_title_label = ttk.Label(qr_frame, text="Want Directions?")
+        qr_title_label.grid(row=0, column=0, padx=5, pady=5)
+        qr_label = ttk.Label(qr_frame, image=qr_photo)
+        qr_label.image = qr_photo
+        qr_label.grid(row=1, column=0, padx=5, pady=5)
+    
+def on_listbox_motion(event, listbox, start_y):
+    yview = listbox.yview()
+    scroll_fraction = 0.01  # Adjust this value to control the scroll speed
+    delta_y = event.y - start_y
+    yview_moveto = max(0, min(1, yview[0] - delta_y * scroll_fraction))
+    listbox.yview_moveto(yview_moveto)
 
+def start_scroll(event):
+    event.widget.scan_mark(event.x, event.y)
+
+def on_listbox_press(event, listbox):
+    listbox.scan_mark(event.x, event.y)
+
+def on_listbox_release(event, listbox, start_y):
+    on_listbox_motion(event, listbox, start_y)
+    listbox.scan_dragto(event.x, event.y)
+    
 class SampleApp(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
         self.title("RUBEN")
+        self.state('zoomed')
         self.geometry("1280x800")  
         self._frame = None
         self.switch_frame(StartPage)
@@ -210,20 +297,49 @@ class MapPage(tk.Frame):
                         print(f"Skipping invalid row: {row}. Error: {e}")
 
         path_1 = None
+        qr_frame = tk.Frame(left_frame)
+        qr_frame.grid(row=4, column=0, padx=5, pady=5, sticky="w")
 
+        qr_title_label = ttk.Label(qr_frame, text="Want Directions?")
+        qr_title_label.grid(row=0, column=0, padx=5, pady=5)
         label_start = ttk.Label(left_frame, text="Starting Location")
         label_start.grid(row=0, column=0, padx=5, pady=5)
-        dropdown_start = ttk.Combobox(left_frame, values=[""] + list(location_coordinates.keys()))
-        dropdown_start.grid(row=1, column=0, padx=5, pady=5)
-        dropdown_start.bind("<<ComboboxSelected>>", lambda event: on_select(marker_start, event, dropdown_end, marker_end, map_widget))
-        dropdown_start.set("BSC")
 
+        listbox_start = Listbox(left_frame, selectmode="single", exportselection=0)
+        listbox_start.grid(row=1, column=0, padx=5, pady=5)
+        for location in [""] + list(location_coordinates.keys()):
+            listbox_start.insert(END, location)
+
+        scrollbar_start = Scrollbar(left_frame, command=listbox_start.yview)
+        scrollbar_start.grid(row=1, column=1, sticky="ns")
+        listbox_start.configure(yscrollcommand=scrollbar_start.set)
+
+        listbox_start.bind("<<ListboxSelect>>", lambda event: on_select(marker_start, event, listbox_end, marker_end, map_widget,qr_frame))
+        listbox_start.bind("<B1-Motion>", lambda event: on_listbox_motion(event, listbox_start, event.y))
+        listbox_start.bind("<ButtonPress-1>", lambda event: on_listbox_press(event, listbox_start))
+        listbox_start.bind("<ButtonRelease-1>", lambda event: on_listbox_release(event, listbox_start, event.y))
+        listbox_start.select_set(0)
+        listbox_start.activate(0)
+
+        # Repeat the process for the destination listbox
         label_end = ttk.Label(left_frame, text="Destination")
         label_end.grid(row=2, column=0, padx=5, pady=5)
-        dropdown_end = ttk.Combobox(left_frame, values=[""] + list(location_coordinates.keys()))
-        dropdown_end.grid(row=3, column=0, padx=5, pady=5)
-        dropdown_end.bind("<<ComboboxSelected>>", lambda event: on_select(marker_end, event, dropdown_start, marker_start, map_widget))
 
+        listbox_end = Listbox(left_frame, selectmode="single", exportselection=0)
+        listbox_end.grid(row=3, column=0, padx=5, pady=5)
+        for location in [""] + list(location_coordinates.keys()):
+            listbox_end.insert(END, location)
+
+        scrollbar_end = Scrollbar(left_frame, command=listbox_end.yview)
+        scrollbar_end.grid(row=3, column=1, sticky="ns")
+        listbox_end.configure(yscrollcommand=scrollbar_end.set)
+
+        listbox_end.bind("<<ListboxSelect>>", lambda event: on_select(marker_end, event, listbox_start, marker_start, map_widget, qr_frame))
+        listbox_end.bind("<B1-Motion>", lambda event: on_listbox_motion(event, listbox_end, event.y))
+        listbox_end.bind("<ButtonPress-1>", lambda event: on_listbox_press(event, listbox_end))
+        listbox_end.bind("<ButtonRelease-1>", lambda event: on_listbox_release(event, listbox_end, event.y))
+        listbox_end.select_set(0)
+        listbox_end.activate(0)
         map_widget.set_position(40.52346671364952, -74.45821773128102)
         map_widget.set_zoom(15)
         map_widget.max_zoom = 15
@@ -232,64 +348,158 @@ class SearchPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
 
+        # Sample QA data
         sample_qa_data = {
-            "What is the largest mammal on Earth?": "The blue whale is the largest mammal on Earth.",
-            "How many continents are there?": "There are seven continents: Africa, Antarctica, Asia, Europe, North America, Australia (Oceania), and South America.",
-            "Who wrote 'Romeo and Juliet'?": "William Shakespeare wrote 'Romeo and Juliet'.",
-            "What is the capital of Japan?": "The capital of Japan is Tokyo.",
-            "What is the boiling point of water in Celsius?": "The boiling point of water in Celsius is 100 degrees.",
-            "Who discovered penicillin?": "Alexander Fleming discovered penicillin.",
-            "What is the currency of Brazil?": "The currency of Brazil is the Brazilian Real (BRL).",
-            "What is the speed of light?": "The speed of light in a vacuum is approximately 299,792 kilometers per second.",
-            "Who painted the Mona Lisa?": "Leonardo da Vinci painted the Mona Lisa.",
-            "What is the meaning of life, the universe, and everything?": "According to Douglas Adams' 'The Hitchhiker's Guide to the Galaxy,' the answer is 42.",
-        }
+    "What's the Wi-Fi password for the student center?": "Join RU-Wireless Secure if you are an enrolled student at Rutgers University, if you are a guest, use the guest sign-in when connecting to RU-Wireless.",
+    "Can you provide information about internship or job opportunities for students?": "The Office of Career and Exploration will assist you.",
+    "Where can I find information about student clubs and organizations?": "The help desk will assist with this matter. You can find the help desk on the map.",
+    "What's the menu like at the campus cafeteria today?": "Go to http://food.rutgers.edu, click Busch Dining Hall, and you will find the menu there.",
+    "Can you assist me in locating a quiet study space?": "The student help desk will assist you in finding a quiet space. You can also find the location of the quiet study space on the map.",
+    "How do I access resources like textbooks or academic materials?": "The Barnes & Noble on College Ave will assist you. Go to https://rutgers.bncollege.com for directions and details.",
+    "Can you recommend local coffee shops or places to study off-campus?": "There is a Panera in the Busch Student Center.",
+    "What are the hours of operation for the library or other campus facilities?": "Go to https://www.libraries.rutgers.edu/visit-study/library-hours to see specific library hours.",
+    "Is there a lost and found service on campus, and how can I contact them?": "Do not worry, R.U.B.E.N is connected to the lost and found database. Click out of the FAQ page and click on the lost and found button for more details.",
+    "Can you help me understand the public transportation options around the campus?": "Visit https://ipo.rutgers.edu/dots/buses-nb for specific stops as the information provided above is a general explanation of the bus routes.",
+    "Where can I print documents or find computer labs for assignments?": "Near the help desk is a set of 3 computers. Students and Faculty are free to log in and print documents at their free will.",
+    "How can I get involved in community service or volunteer work on campus?": "Visit https://community.rutgers.edu/programs-services/program-directory/community-service-student-opportunities for more details!",
+    "What's the quickest way to get to the gym from here?": "R.U.B.E.N would like to walk you to the gym, but he can only walk in the student center. A 5 min walk will take you to the Werblin Recreation Center. GET THOSE STEPS IN!!!!",
+    "Can you suggest resources for mental health and wellness on campus?": "Although R.U.B.E.N is a programmable robot, he believes in the importance of mental health. Visit https://health.rutgers.edu/medical-and-counseling-services/counseling-services.",
+    "Where can I purchase or rent textbooks for my classes?": "The Barnes and Noble on College Ave will assist you. Visit https://rutgers.bncollege.com.",
+    "Do you have information on tutoring services or study groups?": "The student learning center on Busch holds walk-in tutoring sessions for students of all years.",
+    "How can I report a maintenance issue in the student center?": "The student help desk will assist you.",
+    "Can you provide details on campus security and emergency procedures?": "Visit https://newbrunswick.rutgers.edu/student-experience/campus-safety for more details."
+}
 
+
+        # Header frame
         header_frame = tk.Frame(self, bg="#990000", height=80)
         header_frame.pack(fill="x")
 
+        # Back button
         back_button = tk.Button(header_frame, text="Back", command=lambda: master.switch_frame(StartPage),
                                 bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
         back_button.pack(side="left", padx=20)
 
+        # Header label
         header_label = tk.Label(header_frame, text="What do you want to Know?", bg="#990000", fg="white",
                                 font=("Arial", 24, "bold"), pady=20)
         header_label.pack()
 
-        search_frame = tk.Frame(self, bg="#CCCCCC", width=200) 
+        # Search frame
+        search_frame = tk.Frame(self, bg="#CCCCCC", width=200)
         search_frame.pack(side="left", fill="y")
 
+        # Search label
         search_label = tk.Label(search_frame, text="Search:", bg="#CCCCCC", font=("Arial", 16, "bold"), pady=10)
         search_label.pack()
 
-        search_entry = tk.Entry(search_frame, font=("Arial", 14))
-        search_entry.pack(pady=10)
+        # Search entry
+        self.search_entry = tk.Entry(search_frame, font=("Arial", 14))
+        self.search_entry.pack(pady=10)
 
-        search_button = tk.Button(search_frame, text="Search", command=lambda: self.search_question(search_entry.get()),
+        # Search button
+        search_button = tk.Button(search_frame, text="Search", command=lambda: self.search_question(self.search_entry.get()),
                                   bg="#990000", fg="white", font=("Arial", 14, "bold"), padx=10)
         search_button.pack()
 
+        # Keyboard frame
+        self.keyboard_frame = tk.Frame(self, bg="#CCCCCC", height=200)
+        self.keyboard_frame.pack(side="bottom", fill="x")
+        
+        # Question listbox
         self.question_listbox = tk.Listbox(self, selectmode=tk.SINGLE, exportselection=False)
         for question in sample_qa_data.keys():
             self.question_listbox.insert(tk.END, question)
         self.question_listbox.pack(side="left", fill="both", expand=True)
         self.question_listbox.bind("<ButtonRelease-1>", lambda event: self.display_answer(event, sample_qa_data))
 
+        # Answer frame
         self.answer_frame = tk.Frame(self, bg="#CCCCCC", width=500)
+
+
+        # Define the keyboard buttons
+        keyboard_buttons = [
+            "1234567890",
+            "qwertyuiop",
+            "asdfghjkl",
+            "zxcvbnm",
+            {"label": "Shift", "command": self.toggle_shift},
+            {"label": "Backspace", "command": self.on_backspace_click},
+        ]
+
+        # Create keyboard buttons
+        for row in keyboard_buttons:
+            row_frame = tk.Frame(self.keyboard_frame, bg="#CCCCCC")
+            row_frame.pack(side="top", fill="both", expand=True)
+
+            if isinstance(row, dict):
+                btn = tk.Button(row_frame, text=row["label"], command=row["command"],
+                                bg="#CCCCCC", font=("Arial", 12), padx=5, pady=5)
+                btn.pack(side="left", fill="both", expand=True)
+            else:
+                for button in row:
+                    btn = tk.Button(row_frame, text=button,
+                                    command=lambda b=button: self.on_letter_click(b),
+                                    bg="#CCCCCC", font=("Arial", 12), padx=5, pady=5)
+                    btn.pack(side="left", fill="both", expand=True)
+
+        self.shift_pressed = False
+
+    def on_keyboard_button_click(self, button):
+        if isinstance(button, dict):
+            if button["label"] == "Shift":
+                self.toggle_shift()
+        elif button == "backspace":
+            self.on_backspace_click()
+        else:
+            self.on_letter_click(button)
+    
+    
+    def toggle_shift(self):
+        self.shift_pressed = not self.shift_pressed
+        
+        # Update keyboard buttons text based on shift state
+        for row_frame in self.keyboard_frame.winfo_children():
+            for button in row_frame.winfo_children():
+                if isinstance(button, tk.Button) and button["text"] != "Shift" and button["text"] != "Backspace":
+                    if self.shift_pressed:
+                        button["text"] = button["text"].upper()
+                    else:
+                        button["text"] = button["text"].lower()
+
+    def on_backspace_click(self):
+        current_text = self.search_entry.get()
+        self.search_entry.delete(len(current_text) - 1, tk.END)
+
+    def on_letter_click(self, letter):
+        current_text = self.search_entry.get()
+        if self.shift_pressed:
+            letter = letter.upper()
+            self.toggle_shift()
+
+        self.search_entry.insert(tk.END, letter)
 
     def search_question(self, query):
         self.question_listbox.delete(0, tk.END)
         sample_qa_data = {
-            "What is the largest mammal on Earth?": "The blue whale is the largest mammal on Earth.",
-            "How many continents are there?": "There are seven continents: Africa, Antarctica, Asia, Europe, North America, Australia (Oceania), and South America.",
-            "Who wrote 'Romeo and Juliet'?": "William Shakespeare wrote 'Romeo and Juliet'.",
-            "What is the capital of Japan?": "The capital of Japan is Tokyo.",
-            "What is the boiling point of water in Celsius?": "The boiling point of water in Celsius is 100 degrees.",
-            "Who discovered penicillin?": "Alexander Fleming discovered penicillin.",
-            "What is the currency of Brazil?": "The currency of Brazil is the Brazilian Real (BRL).",
-            "What is the speed of light?": "The speed of light in a vacuum is approximately 299,792 kilometers per second.",
-            "Who painted the Mona Lisa?": "Leonardo da Vinci painted the Mona Lisa.",
-            "What is the meaning of life, the universe, and everything?": "According to Douglas Adams' 'The Hitchhiker's Guide to the Galaxy,' the answer is 42.",
+            "What's the Wi-Fi password for the student center?": "Join RU-Wireless Secure if you are an enrolled student at Rutgers University, if you are a guest, use the guest sign-in when connecting to RU-Wireless.",
+            "Can you provide information about internship or job opportunities for students?": "The Office of Career and Exploration will assist you.",
+            "Where can I find information about student clubs and organizations?": "The help desk will assist with this matter. You can find the help desk on the map.",
+            "What's the menu like at the campus cafeteria today?": "Go to http://food.rutgers.edu, click Busch Dining Hall, and you will find the menu there.",
+            "Can you assist me in locating a quiet study space?": "The student help desk will assist you in finding a quiet space. You can also find the location of the quiet study space on the map.",
+            "How do I access resources like textbooks or academic materials?": "The Barnes & Noble on College Ave will assist you. Go to https://rutgers.bncollege.com for directions and details.",
+            "Can you recommend local coffee shops or places to study off-campus?": "There is a Panera in the Busch Student Center.",
+            "What are the hours of operation for the library or other campus facilities?": "Go to https://www.libraries.rutgers.edu/visit-study/library-hours to see specific library hours.",
+            "Is there a lost and found service on campus, and how can I contact them?": "Do not worry, R.U.B.E.N is connected to the lost and found database. Click out of the FAQ page and click on the lost and found button for more details.",
+            "Can you help me understand the public transportation options around the campus?": "Visit https://ipo.rutgers.edu/dots/buses-nb for specific stops as the information provided above is a general explanation of the bus routes.",
+            "Where can I print documents or find computer labs for assignments?": "Near the help desk is a set of 3 computers. Students and Faculty are free to log in and print documents at their free will.",
+            "How can I get involved in community service or volunteer work on campus?": "Visit https://community.rutgers.edu/programs-services/program-directory/community-service-student-opportunities for more details!",
+            "What's the quickest way to get to the gym from here?": "R.U.B.E.N would like to walk you to the gym, but he can only walk in the student center. A 5 min walk will take you to the Werblin Recreation Center. GET THOSE STEPS IN!!!!",
+            "Can you suggest resources for mental health and wellness on campus?": "Although R.U.B.E.N is a programmable robot, he believes in the importance of mental health. Visit https://health.rutgers.edu/medical-and-counseling-services/counseling-services.",
+            "Where can I purchase or rent textbooks for my classes?": "The Barnes and Noble on College Ave will assist you. Visit https://rutgers.bncollege.com.",
+            "Do you have information on tutoring services or study groups?": "The student learning center on Busch holds walk-in tutoring sessions for students of all years.",
+            "How can I report a maintenance issue in the student center?": "The student help desk will assist you.",
+            "Can you provide details on campus security and emergency procedures?": "Visit https://newbrunswick.rutgers.edu/student-experience/campus-safety for more details."
         }
         matched_questions = process.extractBests(query, sample_qa_data.keys(), score_cutoff=80)
         matched_questions = sorted(matched_questions, key=lambda x: x[1], reverse=True)
@@ -330,9 +540,10 @@ class FAQPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
         script_directory = os.path.dirname(os.path.abspath(__file__))
-        image_path = os.path.join(script_directory, "icons", "FAQBackground.jpeg")        
+        image_path = os.path.join(script_directory, "icons/FAQBackground.jpeg")
+        # Load the image file using PhotoImage
         image = Image.open(image_path)
-        resized_image = image.resize((1450, 700))
+        resized_image = image.resize((1450, 700), Image.ANTIALIAS)
 
         photo = ImageTk.PhotoImage(resized_image)
 
@@ -378,14 +589,14 @@ class EventsPage(tk.Frame):
         # Fetch events from the database and create buttons for each event
         conn = sqlite3.connect('data2.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT event_name, event_location FROM Event_Data")
+        cursor.execute("SELECT event_name, event_latitude, event_longitude FROM Event_Data")
         events = cursor.fetchall()
         conn.close()
 
         for event in events:
-            event_name, event_location = event
-            button_text = f"{event_name} - {event_location}"
-            button = tk.Button(self, text=button_text, command=lambda loc=event_location: self.display_map(loc))
+            event_name, event_latitude, event_longitude = event
+            button_text = f"{event_name}"
+            button = tk.Button(self, text=button_text, command=lambda loc=[event_latitude, event_longitude]: self.display_map(loc))
             button.pack(pady=10)
 
     def display_map(self, location):
@@ -396,9 +607,8 @@ class EventsPage(tk.Frame):
         gmap_widget.pack(fill="both", expand=True)
 
         gmap_widget.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
-
-        mrkr = gmap_widget.set_address(location, marker=True)
-        mrkr.set_text("Here")
+        gmap_widget.set_position(location[0],location[1])
+        gmap_widget.set_marker(location[0],location[1], text = "Here I Am!")
         gmap_widget.set_zoom(17)
 
 class EmergencyPage(tk.Frame):
@@ -474,10 +684,87 @@ class LostAndFoundPage(tk.Frame):
                                 bg="#990000", fg="white", font=("Arial", 16, "bold"), padx=10)
         back_button.pack(side="left", padx=20)
 
-        header_label = tk.Label(header_frame, text="Lost and Found", bg="#990000", fg="white",
+        header_label = tk.Label(header_frame, text="Found and Lost", bg="#990000", fg="white",
                                 font=("Arial", 24, "bold"), pady=20)
         header_label.pack()
-        #FINISH THE REMAINDER OF THE PAGE 
+        # Step 1: Create a frame to serve as a parent for canvas and scrollbar
+        outer_frame = tk.Frame(self)
+        outer_frame.pack(fill="both", expand=True)
+
+        # Step 2: Add canvas to outer_frame
+        canvas = tk.Canvas(outer_frame)
+        canvas.pack(side="left", fill="both", expand=True)
+
+        # Step 3: Add scrollbar
+        scrollbar = tk.Scrollbar(outer_frame, orient="vertical", command=canvas.yview)
+        scrollbar.pack(side="right", fill="y")
+
+        # Connect the canvas and scrollbar
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Create a frame inside canvas to contain the items
+        inner_frame = tk.Frame(canvas)
+        canvas.create_window((225, 0), window=inner_frame, anchor="nw")
+
+        # Configure canvas scrolling region
+        inner_frame.bind("<Configure>", lambda event, canvas=canvas: canvas.configure(scrollregion=canvas.bbox("all")))
+
+        # Initialize pair_frames attribute
+        self.pair_frames = []
+
+        # Now add the items to the inner_frame
+        self.load_items(inner_frame)
+
+    def load_items(self, inner_frame):
+        conn2 = sqlite3.connect('L&F_Rut_DB.db')
+        cursor2 = conn2.cursor()
+        cursor2.execute("SELECT Items, Description, Item_Image FROM Lost_And_Found_DB")
+
+        itemsSel = cursor2.fetchall()
+        conn2.close()
+
+        # Organize items into pairs
+        pairs = []
+        for i in range(0, len(itemsSel), 2):
+            if i + 1 < len(itemsSel):
+                pairs.append((itemsSel[i], itemsSel[i + 1]))
+            else:
+                pairs.append((itemsSel[i], None))
+
+        for pair_index, (item1, item2) in enumerate(pairs):
+            if pair_index < len(self.pair_frames):
+                pair_frame = self.pair_frames[pair_index]
+            else:
+                pair_frame = tk.Frame(inner_frame)  # Create a frame for each pair
+                pair_frame.pack(in_=inner_frame)
+                self.pair_frames.append(pair_frame)
+
+            for item_index, item in enumerate((item1, item2)):
+                if item:
+                    Items, Description, Item_Image = item
+                    button_text = f"{Items}" # - {Description}"
+
+                    imageItem = Image.open(BytesIO(Item_Image))
+                    imageItem.thumbnail((400, 400))
+                    imgtk = ImageTk.PhotoImage(imageItem)
+
+                    button = tk.Button(pair_frame, text=button_text)
+                    image_label = tk.Label(pair_frame, image=imgtk)
+
+                    button.grid(row=0, column=item_index, padx=10, pady=10)
+                    image_label.grid(row=1, column=item_index, padx=10, pady=10)
+
+                    # Keep a reference to avoid garbage collection
+                    image_label.image = imgtk
+
+                    # Save reference to imgtk to prevent garbage collection
+                    button.imgtk = imgtk
+
+                    # Bind a function to the button to prevent garbage collection
+                    button.config(command=lambda x=imgtk: self.display_item(x))
+
+
+
 if __name__ == "__main__":
     app = SampleApp()
     app.mainloop()
